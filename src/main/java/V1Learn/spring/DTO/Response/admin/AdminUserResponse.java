@@ -13,7 +13,7 @@ import java.util.Set;
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Admin_UserResponse {
+public class AdminUserResponse {
     String id;
     String lastName;
     String email;

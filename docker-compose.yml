@@ -1,22 +1,19 @@
 version: '3.8'
 services:
-#  api-service:
-#    container_name: api-container
-#    restart: always
-#    build:
-#      context: ./
-#      dockerfile: Dockerfile
-#    ports:
-#      - "8081:8080"
-#    depends_on:
-#      - mysql
-#    networks:
-#      - backend
-#    environment:
-#      MYSQL_HOST: mysql
-#      MYSQL_USER: root
-#      MYSQL_PASSWORD: root
-#      MYSQL_PORT: 3307
+
+  app:
+    container_name: springboot_app
+    build: .
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mysql
+      - redis
+      - kafka
+    env_file:
+      - .env
+    networks:
+      - backend
 
   mysql:
     image: mysql:8.0
@@ -25,8 +22,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: web_course
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
+
     ports:
       - "3307:3306"
     volumes:
@@ -51,7 +47,7 @@ services:
     container_name: kafka
     hostname: kafka
     ports:
-      - '9094:9094' # Expose cho ứng dụng bên ngoài
+      - '9094:9094'
     environment:
       - KAFKA_ENABLE_KRAFT=yes
       - KAFKA_KRAFT_CLUSTER_ID=kraft-cluster-12345
@@ -67,6 +63,9 @@ services:
     volumes:
       - kafka-data:/bitnami/kafka
     restart: unless-stopped
+    networks:
+      - backend
+
 networks:
   backend:
     driver: bridge

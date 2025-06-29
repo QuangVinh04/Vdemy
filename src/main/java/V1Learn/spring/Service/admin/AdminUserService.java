@@ -2,13 +2,13 @@ package V1Learn.spring.Service.admin;
 
 import V1Learn.spring.DTO.Response.PageResponse;
 import V1Learn.spring.DTO.Response.UserDetailResponse;
-import V1Learn.spring.DTO.Response.admin.Admin_UserResponse;
+import V1Learn.spring.DTO.Response.admin.AdminUserResponse;
 import V1Learn.spring.Entity.RegisterTeacher;
 import V1Learn.spring.Entity.Role;
 import V1Learn.spring.Entity.User;
 import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
-import V1Learn.spring.Mapper.admin.Admin_UserMapper;
+import V1Learn.spring.Mapper.admin.AdminUserMapper;
 import V1Learn.spring.Repostiory.RegisterTeacherRepository;
 import V1Learn.spring.Repostiory.RoleRepository;
 import V1Learn.spring.Repostiory.UserRepository;
@@ -26,6 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
+
+/**
+ * Service provides user management functions for admin.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -33,15 +37,21 @@ import java.util.stream.Collectors;
 public class AdminUserService {
 
     UserRepository userRepository;
-    Admin_UserMapper userMapper;
+    AdminUserMapper userMapper;
     RoleRepository roleRepository;
     RegisterTeacherRepository registerTeacherRepository;
 
-    public PageResponse<?> getAllUsers(Pageable pageable) {
+    /**
+     * Get the list of paged users.
+     *
+     * @param pageable the paged information
+     * @return PageResponse containing the list of users
+     */
+    public PageResponse<List<AdminUserResponse>> getAllUsers(Pageable pageable) {
         Page<User> users = userRepository.findAll(pageable);
-        List<Admin_UserResponse> userResponses = users.stream()
+        List<AdminUserResponse> userResponses = users.stream()
                 .map(u -> {
-                    Admin_UserResponse response = userMapper.toUserResponse(u);
+                    AdminUserResponse response = userMapper.toUserResponse(u);
                     Set<String> roles = u.getRoles().stream()
                             .map(Role::getName)
                             .collect(Collectors.toSet());
@@ -49,7 +59,7 @@ public class AdminUserService {
                     return response;
                 }).toList();
 
-        return PageResponse.builder()
+        return PageResponse.<List<AdminUserResponse>>builder()
                 .pageNo(pageable.getPageNumber())
                 .pageSize(pageable.getPageSize())
                 .totalPage(users.getTotalPages())
@@ -58,6 +68,12 @@ public class AdminUserService {
     }
 
 
+    /**
+     * Disable the user account.
+     *
+     * @param userId ID of the user to ban
+     * @throws AppException if the user does not exist or has been banned
+     */
     @Transactional
     public void banUser(String userId) {
         User user = userRepository.findById(userId)
@@ -71,6 +87,12 @@ public class AdminUserService {
         userRepository.save(user);
     }
 
+    /**
+     * Reactivate a banned user account.
+     *
+     * @param userId ID of the user to unban
+     * @throws AppException if the user does not exist or has not been banned
+     */
     @Transactional
     public void unbanUser(String userId) {
         User user = userRepository.findById(userId)
@@ -84,6 +106,13 @@ public class AdminUserService {
         userRepository.save(user);
     }
 
+    /**
+     * Updates the user's role.
+     *
+     * @param userId The user ID
+     * @param roleName The new role name
+     * @throws AppException if the user or role does not exist
+     */
     @Transactional
     public void updateUserRole(String userId, String roleName) {
         User user = userRepository.findById(userId)
@@ -99,6 +128,14 @@ public class AdminUserService {
         userRepository.save(user);
     }
 
+
+    /**
+     * Get the user's teacher application details.
+     *
+     * @param userId The user ID
+     * @return UserDetailResponse containing the details
+     * @throws AppException if the user does not exist
+     */
     @Transactional(readOnly = true)
     public UserDetailResponse getUserApplicationDetail(String userId) {
         User user = userRepository.findById(userId)
