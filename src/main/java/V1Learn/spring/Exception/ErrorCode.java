@@ -41,6 +41,9 @@ public enum ErrorCode {
     REVIEW_NOT_FOUND (3004, "Review not found", HttpStatus.NOT_FOUND),
     COURSE_ALREADY_BANNED(3005, "Course already banned", HttpStatus.BAD_REQUEST),
     COURSE_NOT_BANNED(3006, "Course not banned", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_FOUND(3007, "Category not found", HttpStatus.NOT_FOUND),
+    COURSE_ALREADY_PUBLISHED(3008, "Course already published", HttpStatus.BAD_REQUEST),
+
     //  Chapter
     CHAPTER_NOT_FOUND(4001, "Chapter not found", HttpStatus.NOT_FOUND),
     CHAPTER_ALREADY_EXISTS(4002, "Chapter already exists", HttpStatus.BAD_REQUEST),
@@ -49,6 +52,13 @@ public enum ErrorCode {
     LESSON_NOT_FOUND(5001, "Lesson not found", HttpStatus.NOT_FOUND),
     LESSON_ALREADY_EXISTS(5002, "Lesson already exists", HttpStatus.BAD_REQUEST),
     ACCESS_DENIED(5003, "Access denied", HttpStatus.FORBIDDEN),
+
+
+    // Media
+    MEDIA_NOT_FOUND(6001, "Media not found", HttpStatus.NOT_FOUND),
+    MEDIA_ALREADY_EXISTS(6002, "Media already exists", HttpStatus.BAD_REQUEST),
+    INVALID_TYPE(6003, "Invalid type", HttpStatus.BAD_REQUEST),
+    MEDIA_IN_USE(6004, "Media in use", HttpStatus.BAD_REQUEST)
     ;
 
 

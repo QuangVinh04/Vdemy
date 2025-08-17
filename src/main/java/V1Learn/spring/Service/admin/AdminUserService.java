@@ -156,7 +156,7 @@ public class AdminUserService {
                     .expertise(registerTeacher.getExpertise())
                     .certificateUrl(registerTeacher.getCertificateUrl())
                     .portfolioUrl(registerTeacher.getPortfolioUrl())
-                    .createdAT(user.getCreatedAT())
+                    .createdAt(user.getCreatedAt())
                     .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
                     .build();
         }
@@ -173,7 +173,7 @@ public class AdminUserService {
                 .expertise("")
                 .certificateUrl("")
                 .portfolioUrl("")
-                .createdAT(user.getCreatedAT())
+                .createdAt(user.getCreatedAt())
                 .roles(user.getRoles().stream().map(Role::getName).collect(Collectors.toSet()))
                 .build();
     }

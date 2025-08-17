@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL) // giá trị nào = null thì ko trả về
 public class APIResponse <T> {
+    @Builder.Default
     int code = 1000;
     String message;
     T result;

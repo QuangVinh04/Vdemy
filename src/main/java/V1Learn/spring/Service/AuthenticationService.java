@@ -22,7 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,6 +37,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 
+/**
+ * Service quản lý xác thực của người dùng
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -49,8 +51,7 @@ public class AuthenticationService {
     AuthenticationManager authenticationManager;
     OutboundUserClient outboundUserClient;
     OutboundIdentityClient outboundIdentityClient;
-    private final RoleService roleService;
-    private final RoleRepository roleRepository;
+    RoleRepository roleRepository;
 
     @NonFinal
     @Value("${spring.security.oauth2.client.registration.google.client-id}")
@@ -68,8 +69,9 @@ public class AuthenticationService {
     protected final String GRANT_TYPE = "authorization_code";
 
 
-     //kiểm tra tính hợp lệ của token
+
     public IntrospectResponse introspect(String token) throws JOSEException, ParseException {
+
         boolean isValid = true;
         Set<String> roles = new HashSet<>();
         try {
@@ -85,11 +87,13 @@ public class AuthenticationService {
             isValid = false;
 
         }
+        log.info("Introspect token successful");
         return IntrospectResponse.builder()
                 .valid(isValid)
                 .scope(roles)
                 .build();
     }
+
 
     public AuthenticationResponse outboundAuthenticate(String code, HttpServletResponse httpResponse) throws ParseException {
         var response = outboundIdentityClient.exchangeToken(ExchangeTokenRequest.builder()
@@ -100,7 +104,7 @@ public class AuthenticationService {
                 .grantType(GRANT_TYPE)
                 .build());
 
-        log.info("TOKEN RESPONSE {}", response);
+        log.info("Token response {}", response);
 
         // Get user info
         var userInfo = outboundUserClient.getUserInfo("json", response.getAccessToken());
@@ -154,6 +158,7 @@ public class AuthenticationService {
 
 
 
+
     public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response) throws ParseException {
 
         Authentication authentication = authenticationManager.authenticate(
@@ -177,17 +182,16 @@ public class AuthenticationService {
         // Lưu refresh token vào Redis có key là refresh + userId;
         redisService.setWithTTL("refresh:" + user.getId(), refreshToken, expiryTime.getTime(), TimeUnit.MILLISECONDS);
 
-        log.debug("Refresh token stored in Redis for userId={}, expiry={}", user.getId(), expiryTime);
-
-
+        log.info("Refresh token stored in Redis for userId={}, expiry={}", user.getId(), expiryTime);
         addRefreshToCookie(refreshToken, response);
-
+        log.info("Login with email and password successful");
         return AuthenticationResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .userId(user.getId())
                 .build();
     }
+
 
     public void logout(LogoutRequest request, HttpServletResponse response) throws ParseException, JOSEException {
         try {
@@ -208,15 +212,19 @@ public class AuthenticationService {
         }
     }
 
+
+
     public RefreshTokenResponse refreshToken(String refreshToken, String accessToken) throws ParseException, JOSEException {
         // kiểm tra refreshToken lưu trong redis
         var signedJWT =  jwtService.verifyToken(refreshToken);
         String refreshKey = "refresh:" + signedJWT.getJWTClaimsSet().getSubject();
         String storedRefreshToken = redisService.getValue(refreshKey).toString();
+
+        log.info("refreshKey:{} and storedRefreshToken:{}", refreshKey, storedRefreshToken);
+
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
             throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
         }
-
         // Thêm accessToken vào blacklist
         if(accessToken != null) {
             SignedJWT jwt = SignedJWT.parse(accessToken);
@@ -239,6 +247,7 @@ public class AuthenticationService {
     }
 
 
+
     private void deleteRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", "");
         cookie.setHttpOnly(true);
@@ -247,6 +256,7 @@ public class AuthenticationService {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
+
 
     private void addRefreshToCookie(String refreshToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);

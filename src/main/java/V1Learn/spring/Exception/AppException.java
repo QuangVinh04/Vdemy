@@ -1,10 +1,18 @@
 package V1Learn.spring.Exception;
 
+
 public class AppException extends RuntimeException {
     private ErrorCode errorCode;
 
+    // Constructor mặc định theo errorCode
     public AppException(ErrorCode errorCode) {
         super(errorCode.getMessage());
+        this.errorCode = errorCode;
+    }
+
+    // Constructor với message tùy chỉnh
+    public AppException(ErrorCode errorCode, String customMessage) {
+        super(customMessage);
         this.errorCode = errorCode;
     }
 

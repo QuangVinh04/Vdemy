@@ -1,24 +1,21 @@
 package V1Learn.spring.DTO.Request;
 
-
-
-import V1Learn.spring.utils.CourseLevel;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 
-
-
-@Data
 @Getter
 @AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CourseCreationRequest {
+public class CreateSignatureRequest {
+    @NotBlank
+    String folder;
 
-    String tempTitle;
-
+    @NotBlank
+    String resourceType;
 }

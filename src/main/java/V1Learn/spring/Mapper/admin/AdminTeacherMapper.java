@@ -8,7 +8,7 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface AdminTeacherMapper {
-    @Mapping(source = "createdAT", target = "createdAT")
+
     @Mapping(target = "roles", ignore = true)
     AdminTeacherResponse toTeacherResponse(User user);
 }

@@ -29,9 +29,10 @@ public class AuthenticationController {
     @PostMapping("/outbound/authentication")
     public APIResponse<AuthenticationResponse> outboundAuthenticateGoogle(@RequestParam("code") String code,
                                                                           HttpServletResponse response) throws ParseException {
-        log.info("Login with username and password");
+        log.info("Request login with Google");
         var result = authenticationService.outboundAuthenticate(code, response);
         return APIResponse.<AuthenticationResponse>builder()
+                .message("Login Google successful")
                 .result(result)
                 .build();
     }
@@ -41,19 +42,22 @@ public class AuthenticationController {
     @PostMapping("/login")
     APIResponse<AuthenticationResponse> authenticated(@RequestBody AuthenticationRequest request,
                                                       HttpServletResponse response) throws ParseException {
-        log.info("Login with Google");
+        log.info("Request login with email and password");
         var result = authenticationService.authenticate(request, response);
         return APIResponse.<AuthenticationResponse>builder()
+                .message("Login successful")
                 .result(result)
                 .build();
     }
 
     @PostMapping("/introspect")
     APIResponse<IntrospectResponse> introspected(@RequestHeader(name = "Authorization") String authHeader) throws ParseException, JOSEException {
-        log.info("Introspect token");
+
         String token = extractToken(authHeader);
+        log.info("Request introspect token: {}", token);
         var result = authenticationService.introspect(token);
         return APIResponse.<IntrospectResponse>builder()
+                .message("Introspect token successful")
                 .result(result)
                 .build();
     }
@@ -61,19 +65,21 @@ public class AuthenticationController {
     @PostMapping("/logout")
     APIResponse<Void> logout(@RequestBody LogoutRequest request,
                              HttpServletResponse response) throws ParseException, JOSEException {
-        log.info("Logout user");
+        log.info("Request logout user");
         authenticationService.logout(request, response);
         return APIResponse.<Void>builder()
+                .message("Logout successful")
                 .build();
     }
 
     @PostMapping("/refresh")
     APIResponse<RefreshTokenResponse> refresh(@CookieValue("refreshToken") String refreshToken,
                                               @RequestHeader(name = "Authorization", required = false) String authHeader) throws ParseException, JOSEException {
-        log.info("Refresh token");
         String accessToken = extractToken(authHeader);
+        log.info("Request refresh token: {}", accessToken);
         RefreshTokenResponse result = authenticationService.refreshToken(refreshToken, accessToken);
         return APIResponse.<RefreshTokenResponse>builder()
+                .message("Refresh token successful")
                 .result(result)
                 .build();
     }
