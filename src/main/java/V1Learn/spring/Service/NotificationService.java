@@ -98,7 +98,7 @@ public class NotificationService {
                         .message(notification.getMessage())
                         .url(notification.getUrl())
                         .isRead(notification.getIsRead())
-                        .timestamp(notification.getCreatedAT())
+                        .timestamp(notification.getCreatedAt())
                         .build())
                 .toList();
     }

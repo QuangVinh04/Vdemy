@@ -2,7 +2,7 @@
 
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Request.ChapterRequest;
+
 import V1Learn.spring.DTO.Request.CreateSignatureRequest;
 import V1Learn.spring.DTO.Request.MediaUploadRequest;
 import V1Learn.spring.DTO.Response.APIResponse;
@@ -10,7 +10,7 @@ import V1Learn.spring.DTO.Response.CreateSignatureResponse;
 import V1Learn.spring.DTO.Response.MediaFileResponse;
 import V1Learn.spring.Service.CloudinaryService;
 import V1Learn.spring.Service.MediaFileService;
-import V1Learn.spring.utils.ResourceType;
+
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

@@ -127,21 +127,21 @@ public class UserController {
                 .build();
     }
 
-    @GetMapping(path = "/teacher/students", produces = MediaType.APPLICATION_JSON_VALUE)
-    APIResponse<?> getAllStudents(
-            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
-            Pageable pageable) {
-        log.info("Controller: get All Students");
-        return APIResponse.builder()
-                .result(userService.getAllStudentsByTeacher(pageable))
-                .build();
-    }
+//    @GetMapping(path = "/teacher/students", produces = MediaType.APPLICATION_JSON_VALUE)
+//    APIResponse<?> getAllStudents(
+//            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
+//            Pageable pageable) {
+//        log.info("Controller: get All Students");
+//        return APIResponse.builder()
+//                .result(userService.getAllStudentsByTeacher(pageable))
+//                .build();
+//    }
 
-    @DeleteMapping("/teacher/{userId}")
-    APIResponse<String> deleteUserByTeacher(@PathVariable String userId) {
-        userService.deleteUserByTeacher(userId);
-        return APIResponse.<String>builder().result("User has been deleted").build();
-    }
+//    @DeleteMapping("/teacher/{userId}")
+//    APIResponse<String> deleteUserByTeacher(@PathVariable String userId) {
+//        userService.deleteUserByTeacher(userId);
+//        return APIResponse.<String>builder().result("User has been deleted").build();
+//    }
 
 
     @DeleteMapping("/{userId}")

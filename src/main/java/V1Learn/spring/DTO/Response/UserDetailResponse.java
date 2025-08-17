@@ -25,5 +25,5 @@ public class UserDetailResponse {
     String certificateUrl;
     String portfolioUrl;
     Set<String> roles;
-    LocalDateTime createdAT;
+    LocalDateTime createdAt;
 }

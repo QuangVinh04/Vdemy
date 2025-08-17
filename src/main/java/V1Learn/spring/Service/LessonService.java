@@ -22,7 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -39,65 +41,25 @@ public class LessonService {
     LessonMapper lessonMapper;
 
 
-
+    @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
-    public LessonResponse createLesson(LessonRequest request,
-                                       MultipartFile lessonFile) throws AppException {
-        log.info("Service: create Lesson");
+    public LessonResponse createLesson(String chapterId,
+                                       LessonRequest request) throws AppException {
 
-        Chapter chapter = chapterRepository.findById(request.getChapterId())
+
+        Chapter chapter = chapterRepository.findById(chapterId)
                 .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
 
-        Integer maxOrderIndex = lessonRepository.findMaxOrderIndexByChapterId(request.getChapterId()).orElse(0);
+        Integer maxOrderIndex = lessonRepository.findMaxOrderIndexByChapterId(chapterId).orElse(0);
 
-        Lesson lesson = Lesson.builder()
-                .name(request.getName())
-                .chapter(chapter)
-                .contentType(request.getContentType())
-                .description(request.getDescription())
-                .orderIndex(maxOrderIndex + 1)
-                .build();
-
-        if(lessonFile != null) {
-            String contentUrl = cloudinaryService.uploadLesson(lessonFile, request.getContentType());
-            lesson.setContentUrl(contentUrl);
-        }
-
+        Lesson lesson = lessonMapper.toLesson(request);
+        lesson.setChapter(chapter);
+        lesson.setOrderIndex(maxOrderIndex + 1);
 
         return lessonMapper.toLessonResponse(lessonRepository.save(lesson));
     }
 
 
-
-    @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
-    public LessonResponse updateLesson(String lessonId,
-                                       LessonRequest request,
-                                       MultipartFile lessonFile) {
-        log.info("Service: update Lesson");
-
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-
-        lesson.setName(request.getName());
-        lesson.setDescription(request.getDescription());
-        if(lessonFile != null) {
-
-            if(lesson.getContentUrl() != null) {
-                cloudinaryService.deleteFile(lesson.getContentUrl(), lesson.getContentType());
-            }
-            lesson.setContentType(request.getContentType());
-            String newContentUrl = cloudinaryService.uploadLesson(lessonFile, request.getContentType());
-            lesson.setContentUrl(newContentUrl);
-        }
-
-        lessonRepository.save(lesson);
-
-        return LessonResponse.builder()
-                .name(lesson.getName())
-                .description(lesson.getDescription())
-                .contentUrl(lesson.getContentUrl())
-                .build();
-    }
 
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
@@ -107,36 +69,6 @@ public class LessonService {
         lessonRepository.deleteById(lessonId);
     }
 
-    public String getLessonContent(String lessonId) {
-
-        Lesson lesson = lessonRepository.findById(lessonId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
-
-        Course course = lesson.getChapter().getCourse();
-
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        boolean hasAccess = false;
-
-        List<Enrollment> enrollmentList = enrollmentRepository.findByUserAndCourseId(user, course.getId());
-        if(!enrollmentList.isEmpty()) {
-            for(Enrollment e: enrollmentList) {
-                if (e.getStatus().equals(EnrollmentStatus.COMPLETED) && e.getPayment().getStatus().equals(PaymentStatus.COMPLETED)) {
-                    hasAccess = true;
-                    break;
-                }
-            }
-        }
 
 
-        if (!hasAccess && !SecurityUtils.hasRole("ADMIN") && course.getInstructor().getId() != user.getId()) {
-            throw new AppException(ErrorCode.ACCESS_DENIED);
-        }
-
-        return lesson.getContentUrl();
-
-    }
 }

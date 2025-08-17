@@ -20,7 +20,7 @@ public class ReviewResponse {
     Integer rating;
     String reviewerName;
     String reviewerAvatar;
-    LocalDateTime createdAT;
+    LocalDateTime createdAt;
     String instructorName;
     String reply; // phản hồi của giảng viên (nếu có)
     LocalDateTime replyAt;

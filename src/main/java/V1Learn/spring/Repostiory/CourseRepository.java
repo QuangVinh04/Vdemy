@@ -28,8 +28,8 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
 
     @Query("SELECT AVG(r.rating) FROM Review r " +
             "WHERE r.course.instructor.id = :userId " +
-            "AND MONTH(r.createdAT) = :month " +
-            "AND YEAR(r.createdAT) = :year")
+            "AND MONTH(r.createdAt) = :month " +
+            "AND YEAR(r.createdAt) = :year")
     Double getAverageRatingByUserAndMonth(@Param("userId") String userId,
                                           @Param("month") int month,
                                           @Param("year") int year);
@@ -39,5 +39,10 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
 
     @Query("SELECT c FROM Course c WHERE c.status = :status OR c.status = :status2")
     Page<Course> findByStatusEnabled(Pageable pageable, CourseStatus status, CourseStatus status2);
+
+
+    boolean existsByThumbnailPublicId(String publicId);
+
+    boolean existsByVideoPublicId(String publicId);
 }
 

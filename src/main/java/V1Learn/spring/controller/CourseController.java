@@ -29,91 +29,126 @@ public class CourseController {
     CourseService courseService;
     CourseDraftService courseDraftService;
 
-    @PostMapping(value = "/create-course", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public APIResponse<?> createCourse(
-            @RequestPart("courseRequest") CourseCreationRequest request,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
-            @RequestPart(value = "video", required = false) MultipartFile introVideo,
-            @RequestPart(value = "lessonVideos", required = false) Map<String, MultipartFile> lessonVideos) {
-        log.info("Creating new course");
-        var result = courseService.createCourse(request, thumbnail, introVideo, lessonVideos);
-        return APIResponse.builder().result(result).build();
-    }
+//    @PostMapping(value = "/create-course", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public APIResponse<?> createCourse(
+//            @RequestPart("courseRequest") CourseCreationRequest request,
+//            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
+//            @RequestPart(value = "video", required = false) MultipartFile introVideo) {
+//        log.info("Request creating new course");
+//        var result = courseService.createNewCourse(request, thumbnail, introVideo);
+//        return APIResponse.builder()
+//                .result(result)
+//                .message("Create new course successfully")
+//                .build();
+//    }
 
-    @PutMapping(value = "/update-course/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public APIResponse<CourseResponse> updateCourseById(
-            @PathVariable String courseId,
-            @RequestPart("courseRequest") CourseUpdateRequest request,
-            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
-            @RequestPart(value = "video", required = false) MultipartFile introVideo,
-            @RequestPart(value = "lessonVideos", required = false) Map<String, MultipartFile> lessonVideos) {
-        log.info("Updating course with ID: {}", courseId);
+    @PostMapping(value = "/create-course")
+    public APIResponse<CourseResponse> createCourse(
+            @RequestBody CourseCreationRequest request) {
+        log.info("Request creating new course");
+        var result = courseService.createNewCourse(request);
         return APIResponse.<CourseResponse>builder()
-                .result(courseService.updateCourse(courseId, request, thumbnail, introVideo, lessonVideos))
+                .result(result)
+                .message("Create new course successfully")
                 .build();
     }
 
-//    @PostMapping("/course/create-preview")
-//    APIResponse<?> createPreview(@ModelAttribute CourseUpdateRequest request,
-//                                @RequestParam(required = false) String courseId) {
-//        log.info("Controller: create Preview");
-//        return APIResponse.builder()
-//                .result(courseDraftService.savePreview(courseId, request))
-//                .build();
-//    }
 
-//    @GetMapping("/course/get-preview")
-//    APIResponse<?> getPreview(String courseId) {
-//        log.info("Controller: get preview Courses");
-//        return APIResponse.builder()
-//                .result(courseDraftService.getPreview(courseId))
-//                .build();
-//    }
+
+    @PutMapping(value = "/update-course/{courseId}")
+    public APIResponse<CourseResponse> updateCourse(
+            @PathVariable String courseId,
+            @RequestBody CourseUpdateRequest request) {
+        log.info("Request updating course with ID: {}", courseId);
+        return APIResponse.<CourseResponse>builder()
+                .result(courseService.updateCourse(courseId, request))
+                .build();
+    }
+
+    @PutMapping(value = "/publish-course/{courseId}")
+    public APIResponse<CourseResponse> publish(@PathVariable String courseId) {
+        log.info("Request publish course with ID: {}", courseId);
+        courseService.publish(courseId);
+        return APIResponse.<CourseResponse>builder()
+                .message("Create new course successfully")
+                .build();
+    }
+
+    @PostMapping("/course/create-preview")
+    APIResponse<?> createPreview(@ModelAttribute CourseUpdateRequest request,
+                                @RequestParam(required = false) String courseId) {
+        log.info("Controller: create Preview");
+        return APIResponse.builder()
+                .result(courseDraftService.savePreview(courseId, request))
+                .build();
+    }
+
+    @GetMapping("/course/get-preview")
+    APIResponse<?> getPreview(String courseId) {
+        log.info("Controller: get preview Courses");
+        return APIResponse.builder()
+                .result(courseDraftService.getPreview(courseId))
+                .build();
+    }
 
     @DeleteMapping("/delete-course/{courseId}")
     public APIResponse<String> deleteCourseById(@PathVariable String courseId) {
-        log.info("Deleting course with ID: {}", courseId);
+        log.info("Request deleting course with ID: {}", courseId);
         courseService.deleteCourse(courseId);
-        return APIResponse.<String>builder().result("Course has been deleted").build();
+        return APIResponse.<String>builder()
+                .result("Course has been deleted")
+                .build();
     }
 
 
     @GetMapping(path = "/courses", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getAllCourses(
-            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
-        log.info("Fetching all courses");
-        return APIResponse.builder().result(courseService.getAllCourses(pageable)).build();
+        log.info("Request all courses");
+        return APIResponse.builder()
+                .result(courseService.getAllCourses(pageable))
+                .message("Get all course successful")
+                .build();
     }
 
-    @GetMapping("/teacher/courses")
+    @GetMapping(path = "/teacher/courses", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getCoursesByTeacher(
-            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
-        log.info("Fetching courses by logged-in teacher");
-        return APIResponse.builder().result(courseService.getCourseByTeacher(pageable)).build();
+        log.info("Request courses by logged-in teacher");
+        return APIResponse.builder()
+                .result(courseService.getCourseByTeacher(pageable))
+                .message("Get courses by teacher successful")
+                .build();
     }
 
-    @GetMapping("/user/me/courses")
+    @GetMapping(path = "/user/me/courses", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getCoursesByUser(
-            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
-        log.info("Fetching courses by logged-in user");
-        return APIResponse.builder().result(courseService.getCourseByUser(pageable)).build();
+        log.info("Request courses by logged-in user");
+        return APIResponse.builder()
+                .result(courseService.getCourseByUser(pageable))
+                .message("Get courses by user successful")
+                .build();
     }
 
 
 
     @GetMapping("/course/{courseId}")
     public APIResponse<?> getCourseById(@PathVariable String courseId) {
-        log.info("Fetching course by ID: {}", courseId);
+        log.info("Request course by ID: {}", courseId);
         return APIResponse.builder().result(courseService.getCourseById(courseId)).build();
     }
 
     @GetMapping("/course-detail/{courseId}")
     public APIResponse<?> getCourseDetail(@PathVariable String courseId) {
-        log.info("Fetching course detail by ID: {}", courseId);
-        return APIResponse.builder().result(courseService.getCourseDetail(courseId)).build();
+        log.info("Request course detail by ID: {}", courseId);
+        return APIResponse.builder()
+                .result(courseService.getBasicCourseInfo(courseId))
+                .message("Get course detail successful")
+                .build();
     }
 
 
@@ -123,9 +158,10 @@ public class CourseController {
             @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
             Pageable pageable,
             @RequestParam(required = false) String[] course) {
-        log.info("Searching courses with filters");
+        log.info("Request searching courses with filters");
         return APIResponse.<PageResponse>builder()
                 .result(courseService.advanceSearchWithSpecifications(pageable, course))
+                .message("Search courses successful")
                 .build();
     }
 }

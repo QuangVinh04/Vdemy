@@ -23,5 +23,5 @@ public class ReviewTeacherResponse {
     String content;
     Integer rating;
     String reply;
-    String createdAT;
+    String createdAt;
 }

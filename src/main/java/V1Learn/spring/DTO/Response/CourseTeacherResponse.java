@@ -28,5 +28,6 @@ public class CourseTeacherResponse {
     String videoUrl;
     CourseStatus status;
     Long userEnrolled;
+    String category;
     Set<ChapterResponse> chapters;
 }

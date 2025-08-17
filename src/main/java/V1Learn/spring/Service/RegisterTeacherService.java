@@ -55,7 +55,7 @@ public class RegisterTeacherService {
                             .status(application.getStatus())
                             .certificateUrl(application.getCertificateUrl())
                             .portfolioUrl(application.getPortfolioUrl())
-                            .createdAT(application.getCreatedAT())
+                            .createdAT(application.getCreatedAt())
                             .build())
                     .toList();
             return PageResponse.builder()
@@ -77,7 +77,7 @@ public class RegisterTeacherService {
                         .status(application.getStatus())
                         .certificateUrl(application.getCertificateUrl())
                         .portfolioUrl(application.getPortfolioUrl())
-                        .createdAT(application.getCreatedAT())
+                        .createdAT(application.getCreatedAt())
                         .build())
                 .toList();
         return PageResponse.builder()
@@ -100,14 +100,14 @@ public class RegisterTeacherService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        String certificateUrl = cloudinaryService.upload(request.getCertificate(), "certificates");
-        String portfolioUrl = cloudinaryService.upload(request.getPortfolio(), "portfolios");
+//        String certificateUrl = cloudinaryService.upload(request.getCertificate(), "certificates");
+//        String portfolioUrl = cloudinaryService.upload(request.getPortfolio(), "portfolios");
 
         RegisterTeacher registerTeacher = RegisterTeacher.builder()
                 .expertise(request.getExpertise())
                 .user(user)
-                .certificateUrl(certificateUrl)
-                .portfolioUrl(portfolioUrl)
+//                .certificateUrl(certificateUrl)
+//                .portfolioUrl(portfolioUrl)
                 .status(InstructorApplicationStatus.PENDING)
                 .build();
         applicationRepository.save(registerTeacher);
@@ -131,8 +131,8 @@ public class RegisterTeacherService {
                 .name(user.getFirstName() + " " + user.getLastName())
                 .email(user.getEmail())
                 .expertise(request.getExpertise())
-                .certificateUrl(certificateUrl)
-                .portfolioUrl(portfolioUrl)
+//                .certificateUrl(certificateUrl)
+//                .portfolioUrl(portfolioUrl)
                 .status(InstructorApplicationStatus.PENDING)
                 .build();
     }
@@ -235,12 +235,12 @@ public class RegisterTeacherService {
         RegisterTeacher registerTeacher = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new AppException(ErrorCode.REGISTER_TEACHER_NOT_EXISTS));
 
-        if(registerTeacher.getPortfolioUrl() != null) {
-            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(registerTeacher.getPortfolioUrl()), "raw");
-        }
-        if(registerTeacher.getCertificateUrl() != null){
-            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(registerTeacher.getCertificateUrl()), "raw");
-        }
+//        if(registerTeacher.getPortfolioUrl() != null) {
+//            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(registerTeacher.getPortfolioUrl()), "raw");
+//        }
+//        if(registerTeacher.getCertificateUrl() != null){
+//            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(registerTeacher.getCertificateUrl()), "raw");
+//        }
         applicationRepository.deleteById(applicationId);
     }
 

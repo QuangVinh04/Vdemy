@@ -219,35 +219,35 @@ public class UserService {
                 .map(userMapper::toUserResponse).toList();
     }
 
-    @PreAuthorize("hasAuthority('TEACHER')")
-    public PageResponse getAllStudentsByTeacher(Pageable pageable) {
-        log.info("In method get Students by Teacher");
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+//    @PreAuthorize("hasAuthority('TEACHER')")
+//    public PageResponse getAllStudentsByTeacher(Pageable pageable) {
+//        log.info("In method get Students by Teacher");
+//        String userId = SecurityUtils.getCurrentUserId()
+//                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+//
+//        Page<UserEnrolledResponse> responses = enrollmentRepository.findAllByInstructorId(userId, EnrollmentStatus.COMPLETED, pageable);
+//
+//        return PageResponse.builder()
+//                .pageNo(pageable.getPageNumber())
+//                .pageSize(pageable.getPageSize())
+//                .totalPage(responses.getTotalPages())
+//                .items(responses.toList())
+//                .build();
+//    }
 
-        Page<UserEnrolledResponse> responses = enrollmentRepository.findAllByInstructorId(userId, EnrollmentStatus.COMPLETED, pageable);
-
-        return PageResponse.builder()
-                .pageNo(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .totalPage(responses.getTotalPages())
-                .items(responses.toList())
-                .build();
-    }
-
-    @PreAuthorize("hasAuthority('TEACHER')")
-    public void deleteUserByTeacher(String userId) {
-        log.info("In method get Students by Teacher");
-        String teacherId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        Enrollment  enrollment = enrollmentRepository.findByUserIdAndInstructorId(userId, teacherId)
-                .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_EXIST));
-
-        enrollment.setStatus(EnrollmentStatus.CANCELLED);
-        enrollmentRepository.save(enrollment);
-
-    }
+//    @PreAuthorize("hasAuthority('TEACHER')")
+//    public void deleteUserByTeacher(String userId) {
+//        log.info("In method get Students by Teacher");
+//        String teacherId = SecurityUtils.getCurrentUserId()
+//                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+//
+//        Enrollment  enrollment = enrollmentRepository.findByUserIdAndInstructorId(userId, teacherId)
+//                .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_EXIST));
+//
+//        enrollment.setStatus(EnrollmentStatus.CANCELLED);
+//        enrollmentRepository.save(enrollment);
+//
+//    }
 
 
 

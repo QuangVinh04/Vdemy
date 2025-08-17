@@ -2,6 +2,7 @@ package V1Learn.spring.DTO.Response;
 
 
 
+import V1Learn.spring.Entity.Category;
 import V1Learn.spring.utils.CourseLevel;
 import V1Learn.spring.utils.CourseStatus;
 import lombok.*;
@@ -29,5 +30,9 @@ public class CourseResponse {
     String thumbnailUrl;
     String videoUrl;
     CourseStatus status;
+    String category;
     Set<ChapterResponse> chapters;
+    Boolean step1Completed = false;
+    Boolean step2Completed = false;
+    Boolean step3Completed = false;
 }

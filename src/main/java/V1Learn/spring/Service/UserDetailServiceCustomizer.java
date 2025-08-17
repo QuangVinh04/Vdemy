@@ -1,6 +1,4 @@
 package V1Learn.spring.Service;
-
-import V1Learn.spring.Entity.User;
 import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
 import V1Learn.spring.Repostiory.UserRepository;

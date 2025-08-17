@@ -2,7 +2,7 @@ package V1Learn.spring.utils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public enum PaymentProvider {
+public enum PaymentMethod {
     @JsonProperty("vn_pay")
     VN_PAY,
     @JsonProperty("pay_os")

@@ -22,15 +22,15 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.name = :roleName")
     List<User> findByRoleName(@Param("roleName") String roleName);
 
-    @Query("SELECT COUNT(DISTINCT e.user.id) FROM Enrollment e " +
-            "WHERE e.course.instructor.id = :userId " +
-            "AND MONTH(e.createdAT) = :month " +
-            "AND YEAR(e.createdAT) = :year " +
-            "AND e.status = :status")
-    int countNewStudentsByUserAndMonth(@Param("userId") String userId,
-                                       @Param("month") int month,
-                                       @Param("year") int year,
-                                       EnrollmentStatus status);
+//    @Query("SELECT COUNT(DISTINCT e.user.id) FROM Enrollment e " +
+//            "WHERE e.course.instructor.id = :userId " +
+//            "AND MONTH(e.createdAt) = :month " +
+//            "AND YEAR(e.createdAt) = :year " +
+//            "AND e.status = :status")
+//    int countNewStudentsByUserAndMonth(@Param("userId") String userId,
+//                                       @Param("month") int month,
+//                                       @Param("year") int year,
+//                                       EnrollmentStatus status);
 
 
     Optional<User> findByEmailAndStatus(String email, UserStatus status);

@@ -12,7 +12,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Getter
@@ -25,7 +25,7 @@ import java.util.Set;
 @Table(name = "course")
 public class Course extends AbstractEntity {
 
-    @Column(name = "title")
+    @Column(name = "title", nullable = false)
     String title;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -34,8 +34,41 @@ public class Course extends AbstractEntity {
     @Column(name = "language")
     String language;
 
+    @Column(name = "price", nullable = false)
+    BigDecimal price;
+
+    @Column(name = "discount_price")
+    BigDecimal discountPrice;
+
+    @Column(name = "thumbnail_url")
+    String thumbnailUrl;
+
+    @Column(name = "thumbnail_public_id")
+    String thumbnailPublicId;
+
+    @Column(name = "video_url")
+    String videoUrl;
+
+    @Column(name = "video_public_id")
+    String videoPublicId;
+
+    @Column(name = "total_duration", nullable = false)
+    Integer totalDuration = 2;
+
+    @Column(name = "what_will_i_learn", columnDefinition = "TEXT")
+    String whatWillILearn;
+
+    @Column(name = "target_audience", columnDefinition = "TEXT")
+    String targetAudience;
+
+    @Column(name = "materials_included", columnDefinition = "TEXT")
+    String materialsIncluded;
+
+    @Column(name = "requirements_instructions", columnDefinition = "TEXT")
+    String requirementsInstructions;
+
     @ManyToOne
-    @JoinColumn(name = "instructor_id")
+    @JoinColumn(name = "instructor_id", nullable = false)
     @JsonIgnore
     User instructor;
 
@@ -51,27 +84,28 @@ public class Course extends AbstractEntity {
     @JsonManagedReference
     Set<Chapter> chapters;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = false)
+    Category category;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status" , length = 50, nullable = false)
+    CourseStatus status = CourseStatus.DRAFT;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "level")
     CourseLevel level;
 
-    @Column(name = "price")
-    BigDecimal price;
+    @Column(name = "published_at")
+    LocalDateTime publishedAt;
 
-    @Column(name = "thumbnail_url")
-    String thumbnailUrl;
+    // Step completion tracking
+    @Column(name = "step1_completed")
+    Boolean step1Completed = false;
 
-    @Column(name = "video_url")
-    String videoUrl;
+    @Column(name = "step2_completed")
+    Boolean step2Completed = false;
 
-    @Column(name = "duration")
-    String duration;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status" , length = 50)
-    CourseStatus status;
-
-
-
-
+    @Column(name = "step3_completed")
+    Boolean step3Completed = false;
 }

@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -19,24 +21,25 @@ import org.springframework.web.multipart.MultipartFile;
 public class LessonController {
     LessonService lessonService;
 
-    @PostMapping("/create-lesson")
-    APIResponse<?> createLesson(@RequestPart("request")  LessonRequest request,
-                                @RequestPart(value = "video", required = false) MultipartFile video) {
-        log.info("Controller: create Lesson");
+    @PostMapping("/create-lesson/{chapterId}")
+    APIResponse<?> createLesson(@PathVariable String chapterId,
+                                @RequestBody  LessonRequest request) {
+        log.info("Create Lesson for chapterId: {}", chapterId);
         return APIResponse.builder()
-                .result(lessonService.createLesson(request, video))
+                .result(lessonService.createLesson(chapterId, request))
+                .message("Created Lesson Successfully")
                 .build();
     }
 
 
-    @PutMapping("/update-lesson/{lessonId}")
-    APIResponse<?> updateLesson(@RequestPart("request")  LessonRequest request,
-                                @RequestPart(value = "video", required = false) MultipartFile video,
-                                @PathVariable("lessonId") String lessonId) {
-        return APIResponse.builder()
-                .result(lessonService.updateLesson(lessonId, request, video))
-                .build();
-    }
+//    @PutMapping("/update-lesson/{lessonId}")
+//    APIResponse<?> updateLesson(@RequestPart("request")  LessonRequest request,
+//                                @RequestPart(value = "video", required = false) MultipartFile video,
+//                                @PathVariable("lessonId") String lessonId) {
+//        return APIResponse.builder()
+//                .result(lessonService.updateLesson(lessonId, request, video))
+//                .build();
+//    }
 
     @DeleteMapping("/delete-lesson/{lessonId}")
     APIResponse<String> deleteLesson(@PathVariable String lessonId) {
@@ -44,11 +47,12 @@ public class LessonController {
         return APIResponse.<String>builder().result("Lesson has been deleted").build();
     }
 
-    @GetMapping("/{lessonId}/content")
-    public APIResponse<String> getLessonContent(@PathVariable String lessonId) {
-        String contentUrl = lessonService.getLessonContent(lessonId);
-        return APIResponse.<String>builder()
-                .result(contentUrl)
-                .build();
-    }
+//    @GetMapping("/chapters/{id}/lessons")
+//    public APIResponse<List<LessonResponse>> getLessons(@PathVariable String id) {
+//        log.info("Request get lessons by chapterId: {}", id);
+//        return APIResponse.<List<LessonResponse>>builder()
+//                .result(lessonService.getLessonsByChapterId(id))
+//                .message("Get lessons by chapterId successful")
+//                .build();
+//    }
 }

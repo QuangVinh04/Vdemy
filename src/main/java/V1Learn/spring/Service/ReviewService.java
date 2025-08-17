@@ -128,12 +128,12 @@ public class ReviewService {
                         .userId(review.getUser().getId())
                         .content(review.getContent())
                         .rating(review.getRating())
-                        .createdAT(review.getCreatedAT())
+                        .createdAt(review.getCreatedAt())
                         .reviewerAvatar(review.getUser().getAvatar())
                         .reviewerName(review.getUser().getFullName())
                         .instructorName(course.getInstructor().getFullName())
                         .reply(review.getReply() != null ? review.getReply() : null)
-                        .replyAt(review.getReply() != null ? review.getUpdatedAT() : null)
+                        .replyAt(review.getReply() != null ? review.getUpdatedAt() : null)
                         .build())
                 .toList();
 
@@ -203,7 +203,7 @@ public class ReviewService {
                     .content(r.getContent())
                     .rating(r.getRating())
                     .reply(r.getReply())
-                    .createdAT(r.getCreatedAT().toString())
+                    .createdAt(r.getCreatedAt().toString())
                     .build();
         }).toList();
 

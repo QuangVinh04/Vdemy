@@ -14,7 +14,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
 
     List<Notification> findAllByRecipientIdAndIsReadFalse(String userId);
 
-    @Query("SELECT n FROM Notification n WHERE n.recipient.id = :userId ORDER BY n.createdAT DESC")
+    @Query("SELECT n FROM Notification n WHERE n.recipient.id = :userId ORDER BY n.createdAt DESC")
     List<Notification> findByRecipientIdOrderByIdDesc(String userId);
 
 }

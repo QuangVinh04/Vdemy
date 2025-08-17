@@ -53,20 +53,20 @@ public class RevenueService {
         LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
         LocalDateTime end = start.plusMonths(1).minusSeconds(1);
 
-        BigDecimal revenueThisMonth = paymentRepository
-                .findByUserAndDateRange(user.getId(), start, end, PaymentStatus.COMPLETED)
-                .stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+//        BigDecimal revenueThisMonth = paymentRepository
+//                .findByUserAndDateRange(user.getId(), start, end, PaymentStatus.PAID)
+//                .stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Double ratingThisMonth = courseRepository
                 .getAverageRatingByUserAndMonth(user.getId(), month, year);
 
-        int newStudentsThisMonth = userRepository
-                .countNewStudentsByUserAndMonth(user.getId(), month, year, EnrollmentStatus.COMPLETED);
+//        int newStudentsThisMonth = userRepository
+//                .countNewStudentsByUserAndMonth(user.getId(), month, year, EnrollmentStatus.COMPLETED);
 
         return DashboardSummaryResponse.builder()
-                .revenueThisMonth(revenueThisMonth)
+                .revenueThisMonth(null)
                 .ratingThisMonth(ratingThisMonth)
-                .newStudentsThisMonth(newStudentsThisMonth)
+                .newStudentsThisMonth(null)
                 .build();
     }
 
@@ -83,10 +83,10 @@ public class RevenueService {
         for (int month = 1; month <= 12; month++) {
             LocalDateTime start = LocalDateTime.of(year, month, 1, 0, 0);
             LocalDateTime end = start.plusMonths(1).minusSeconds(1);
-            BigDecimal revenue = paymentRepository
-                    .findByUserAndDateRange(user.getId(), start, end, PaymentStatus.COMPLETED)
-                    .stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-            result.add(new MonthlyRevenueResponse(month, revenue));
+//            BigDecimal revenue = paymentRepository
+//                    .findByUserAndDateRange(user.getId(), start, end, PaymentStatus.COMPLETED)
+//                    .stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            result.add(new MonthlyRevenueResponse(month, null));
         }
         return result;
     }
@@ -101,16 +101,16 @@ public class RevenueService {
         LocalDateTime start = from.atStartOfDay();
         LocalDateTime end = to.atTime(LocalTime.MAX);
 
-        List<Payment> payments = paymentRepository.findByUserAndDateRange(user.getId(), start, end, PaymentStatus.COMPLETED);
+//        List<Payment> payments = paymentRepository.findByUserAndDateRange(user.getId(), start, end, PaymentStatus.COMPLETED);
         List<OrderEarningResponse> result = new ArrayList<>();
-        for (Payment p : payments) {
-            result.add(OrderEarningResponse.builder()
-                    .orderId(p.getId())
-                    .date(p.getCreatedAT().toLocalDate())
-                    .course(p.getEnrollment().getCourse().getTitle())
-                    .amount(p.getAmount())
-                    .build());
-        }
+//        for (Payment p : payments) {
+//            result.add(OrderEarningResponse.builder()
+//                    .orderId(p.getId())
+//                    .date(p.getCreatedAT().toLocalDate())
+//                    .course(p.getEnrollment().getCourse().getTitle())
+//                    .amount(p.getAmount())
+//                    .build());
+//        }
         return result;
     }
 }

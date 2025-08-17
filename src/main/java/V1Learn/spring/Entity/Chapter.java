@@ -21,7 +21,19 @@ import java.util.Set;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Chapter extends AbstractEntity  {
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @Column(name = "title", nullable = false)
+    String title;
+
+    @Column(columnDefinition = "TEXT")
+    String description;
+
+    @Column(name = "order_index", nullable = false)
+    Integer orderIndex;
+
+//    @Column(name = "is_published")
+//    Boolean isPublished = true;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
     @JsonBackReference
     Course course;
@@ -29,18 +41,5 @@ public class Chapter extends AbstractEntity  {
     @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JsonManagedReference
     Set<Lesson> lessons;
-
-    @Column(name = "title", nullable = false)
-    String title;
-
-    @Column(name = "description")
-    String description;
-
-    @Column(name = "order_index")
-    Integer orderIndex;
-
-
-
-
 
 }

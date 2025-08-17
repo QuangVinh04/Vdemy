@@ -29,11 +29,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -42,12 +44,9 @@ import java.util.regex.Pattern;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ChapterService {
 
-    UserRepository userRepository;
     CourseRepository courseRepository;
-    CourseMapper courseMapper;
     ChapterMapper chapterMapper;
-    CloudinaryService cloudinaryService;
-    private final ChapterRepository chapterRepository;
+    ChapterRepository chapterRepository;
 
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
@@ -63,7 +62,6 @@ public class ChapterService {
         Chapter chapter = chapterMapper.toChapter(request);
         chapter.setOrderIndex(maxOrderIndex + 1);
         chapter.setCourse(course);
-
         return chapterMapper.toChapterResponse(chapterRepository.save(chapter));
     }
 
@@ -86,6 +84,19 @@ public class ChapterService {
     public void deleteChapter(String chapterId) throws AppException {
         log.info("Service: delete Chapter");
         chapterRepository.deleteById(chapterId);
+    }
+
+
+    public List<ChapterResponse> getChaptersByCourseId(String courseId) {
+        List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
+        return chapters.stream()
+                .sorted(Comparator.comparingInt(Chapter::getOrderIndex))
+                .map(chapter -> ChapterResponse.builder()
+                        .id(chapter.getId())
+                        .title(chapter.getTitle())
+                        .description(chapter.getDescription())
+                        .build())
+                .collect(Collectors.toList());
     }
 
 

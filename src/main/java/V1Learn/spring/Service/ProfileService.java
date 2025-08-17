@@ -1,5 +1,5 @@
 package V1Learn.spring.Service;
-
+// sửa
 
 import V1Learn.spring.DTO.Request.ProfileUpdateRequest;
 import V1Learn.spring.DTO.Response.ProfileResponse;
@@ -65,15 +65,15 @@ public class ProfileService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         String avatarUrl = null;
         // kiểm tra avatar cũ của User có tồn tại ko
-        if(user.getAvatar() != null){
-            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(user.getAvatar()), "image");
-            user.setAvatar(null);
-        }
-        if(file != null){
-            avatarUrl = cloudinaryService.uploadUserAvatar(file);
-            user.setAvatar(avatarUrl);
-            userRepository.save(user);
-        }
+//        if(user.getAvatar() != null){
+//            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(user.getAvatar()), "image");
+//            user.setAvatar(null);
+//        }
+//        if(file != null){
+//            avatarUrl = cloudinaryService.uploadUserAvatar(file);
+//            user.setAvatar(avatarUrl);
+//            userRepository.save(user);
+//        }
         return avatarUrl;
     }
 

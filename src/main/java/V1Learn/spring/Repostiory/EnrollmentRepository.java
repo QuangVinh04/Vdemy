@@ -22,7 +22,7 @@ import java.util.Optional;
 @Repository
 public interface EnrollmentRepository extends JpaRepository<Enrollment, String> {
 
-    List<Enrollment> findByUserAndCourseId(User user, String courseId);
+    List<Enrollment> findByUserIdAndCourseId(String userId, String courseId);
 
     List<Enrollment> findByStatus(EnrollmentStatus status);
 
@@ -30,25 +30,26 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
     Page<Course> findSuccessfulCoursesByUserId(@Param("userId") String userId,
                                                @Param("status") EnrollmentStatus status,
                                                Pageable pageable);
+
     @Query("SELECT COUNT(e) FROM Enrollment e WHERE e.course.id = :courseId AND e.status = :status" )
     long countByCourseId(@Param("courseId") String courseId, @Param("status") EnrollmentStatus status);
 
-    @Query("""
-    SELECT new  V1Learn.spring.DTO.Response.UserEnrolledResponse(
-        u.id, u.firstName, u.lastName, u.phone, u.email, u.dob, u.gender, u.address, u.avatar, e.createdAT
-    )
-    FROM Enrollment e
-    JOIN e.user u
-    WHERE e.course.instructor.id = :instructorId AND e.status = :status
-    """)
-    Page<UserEnrolledResponse> findAllByInstructorId(@Param("instructorId") String instructorId,
-                                                     @Param("status") EnrollmentStatus status,
-                                                     Pageable pageable);
+//    @Query("""
+//    SELECT new  V1Learn.spring.DTO.Response.UserEnrolledResponse(
+//        u.id, u.firstName, u.lastName, u.phone, u.email, u.dob, u.gender, u.address, u.avatar, e.createdAT
+//    )
+//    FROM Enrollment e
+//    JOIN e.user u
+//    WHERE e.course.instructor.id = :instructorId AND e.status = :status
+//    """)
+//    Page<UserEnrolledResponse> findAllByInstructorId(@Param("instructorId") String instructorId,
+//                                                     @Param("status") EnrollmentStatus status,
+//                                                     Pageable pageable);
 
-    @Query("""
-        SELECT e FROM Enrollment e
-        WHERE e.user.id = :userId AND e.course.instructor.id = :teacherId
-    """)
-    Optional<Enrollment> findByUserIdAndInstructorId(@Param("userId") String userId, @Param("teacherId") String teacherId);
+//    @Query("""
+//        SELECT e FROM Enrollment e
+//        WHERE e.user.id = :userId AND e.course.instructor.id = :teacherId
+//    """)
+//    Optional<Enrollment> findByUserIdAndInstructorId(@Param("userId") String userId, @Param("teacherId") String teacherId);
 
 }
