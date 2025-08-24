@@ -1,13 +1,15 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.EnrollmentStatus;
+import V1Learn.spring.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+
+
 
 @Getter
 @Setter
@@ -20,7 +22,8 @@ import java.util.Set;
 public class Enrollment{
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", updatable = false, nullable = false)
     String id;
 
     @Column(name = "enrolled_at", nullable = false)
