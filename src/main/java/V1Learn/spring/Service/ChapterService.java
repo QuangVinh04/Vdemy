@@ -6,9 +6,11 @@ import V1Learn.spring.DTO.Request.CourseCreationRequest;
 import V1Learn.spring.DTO.Request.CourseUpdateRequest;
 import V1Learn.spring.DTO.Response.ChapterResponse;
 import V1Learn.spring.DTO.Response.CourseResponse;
+import V1Learn.spring.DTO.Response.LessonResponse;
 import V1Learn.spring.DTO.Response.PageResponse;
 import V1Learn.spring.Entity.Chapter;
 import V1Learn.spring.Entity.Course;
+import V1Learn.spring.Entity.Lesson;
 import V1Learn.spring.Entity.User;
 import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
@@ -29,10 +31,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -87,6 +86,7 @@ public class ChapterService {
     }
 
 
+
     public List<ChapterResponse> getChaptersByCourseId(String courseId) {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
         return chapters.stream()
@@ -100,5 +100,5 @@ public class ChapterService {
     }
 
 
-    
+
 }

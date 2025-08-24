@@ -1,12 +1,14 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.LessonType;
+import V1Learn.spring.enums.LessonType;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.HashSet;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -18,11 +20,11 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Lesson extends AbstractEntity {
 
-    @Column(name = "title", nullable = false)
-    String title;
+    @Column(name = "name", nullable = false)
+    String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "lesson_type")
+    @Column(name = "type")
     LessonType lessonType;
 
     @Column(name = "video_url")
@@ -38,7 +40,7 @@ public class Lesson extends AbstractEntity {
     String filePublicId;
 
     @Column(name = "video_duration")
-    Integer videoDuration;
+    Long videoDuration;
 
     @Column(columnDefinition = "TEXT")
     String description;
@@ -46,8 +48,8 @@ public class Lesson extends AbstractEntity {
     @Column(name = "order_index")
     Integer orderIndex;
 
-    @Column(name = "is_free")
-    Boolean isFree = false;
+    @Column(name = "is_preview")
+    Boolean isPreview = false;
 
     @Column(name = "is_published")
     Boolean isPublished = true;
@@ -56,4 +58,5 @@ public class Lesson extends AbstractEntity {
     @JoinColumn(name = "chapter_id", nullable = false)
     @JsonBackReference
     Chapter chapter;
+
 }
