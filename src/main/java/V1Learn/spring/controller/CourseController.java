@@ -4,6 +4,7 @@ import V1Learn.spring.DTO.Request.*;
 import V1Learn.spring.DTO.Response.APIResponse;
 import V1Learn.spring.DTO.Response.CourseResponse;
 import V1Learn.spring.DTO.Response.PageResponse;
+import V1Learn.spring.Service.CourseDetailService;
 import V1Learn.spring.Service.CourseDraftService;
 import V1Learn.spring.Service.CourseService;
 import lombok.AccessLevel;
@@ -14,11 +15,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -27,20 +30,10 @@ import java.util.Map;
 @Slf4j
 public class CourseController {
     CourseService courseService;
+    CourseDetailService courseDetailService;
     CourseDraftService courseDraftService;
 
-//    @PostMapping(value = "/create-course", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-//    public APIResponse<?> createCourse(
-//            @RequestPart("courseRequest") CourseCreationRequest request,
-//            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
-//            @RequestPart(value = "video", required = false) MultipartFile introVideo) {
-//        log.info("Request creating new course");
-//        var result = courseService.createNewCourse(request, thumbnail, introVideo);
-//        return APIResponse.builder()
-//                .result(result)
-//                .message("Create new course successfully")
-//                .build();
-//    }
+
 
     @PostMapping(value = "/create-course")
     public APIResponse<CourseResponse> createCourse(
@@ -125,7 +118,7 @@ public class CourseController {
 
     @GetMapping(path = "/user/me/courses", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getCoursesByUser(
-            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
             Pageable pageable) {
         log.info("Request courses by logged-in user");
         return APIResponse.builder()
@@ -143,10 +136,13 @@ public class CourseController {
     }
 
     @GetMapping("/course-detail/{courseId}")
-    public APIResponse<?> getCourseDetail(@PathVariable String courseId) {
+    public APIResponse<?> getCourseDetail(@PathVariable String courseId,
+                                          @RequestParam(name = "fields", required = false) String fieldsParam) {
+
+        Set<String> fields = parseFields(fieldsParam);
         log.info("Request course detail by ID: {}", courseId);
         return APIResponse.builder()
-                .result(courseService.getBasicCourseInfo(courseId))
+                .result(courseDetailService.getCourseDetail(courseId, fields))
                 .message("Get course detail successful")
                 .build();
     }
@@ -163,6 +159,29 @@ public class CourseController {
                 .result(courseService.advanceSearchWithSpecifications(pageable, course))
                 .message("Search courses successful")
                 .build();
+    }
+
+
+    private Set<String> parseFields(String fieldsParam) {
+        if (fieldsParam == null || fieldsParam.trim().isEmpty()) {
+            // Return default fields when no fields specified
+            return getDefaultFields();
+        }
+
+        return Arrays.stream(fieldsParam.split(","))
+                .map(String::trim)
+                .filter(field -> !field.isEmpty())
+                .collect(Collectors.toSet());
+    }
+
+    private Set<String> getDefaultFields() {
+        return Set.of(
+                "basic",           // Course basic info
+                "instructor",      // Basic instructor info
+                "stats",          // Course statistics
+                "chapters",       // Chapter structure
+                "chapters.lessons" // Lessons within chapters
+        );
     }
 }
 
