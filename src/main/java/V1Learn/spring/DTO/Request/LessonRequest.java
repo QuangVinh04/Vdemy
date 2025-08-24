@@ -2,7 +2,7 @@ package V1Learn.spring.DTO.Request;
 
 
 
-import V1Learn.spring.utils.LessonType;
+import V1Learn.spring.enums.LessonType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LessonRequest {
-    String title;
+    String name;
     String description;
     LessonType lessonType;
     //media

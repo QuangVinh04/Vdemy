@@ -10,9 +10,6 @@ import V1Learn.spring.Repostiory.ChapterRepository;
 import V1Learn.spring.Repostiory.EnrollmentRepository;
 import V1Learn.spring.Repostiory.LessonRepository;
 import V1Learn.spring.Repostiory.UserRepository;
-import V1Learn.spring.utils.EnrollmentStatus;
-import V1Learn.spring.utils.PaymentStatus;
-import V1Learn.spring.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -22,9 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 
 @Slf4j
@@ -34,10 +29,7 @@ import java.util.stream.Collectors;
 public class LessonService {
 
     LessonRepository lessonRepository;
-    UserRepository userRepository;
     ChapterRepository chapterRepository;
-    EnrollmentRepository enrollmentRepository;
-    CloudinaryService cloudinaryService;
     LessonMapper lessonMapper;
 
 
@@ -48,7 +40,7 @@ public class LessonService {
 
 
         Chapter chapter = chapterRepository.findById(chapterId)
-                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.CHAPTER_NOT_FOUND));
 
         Integer maxOrderIndex = lessonRepository.findMaxOrderIndexByChapterId(chapterId).orElse(0);
 
@@ -56,8 +48,42 @@ public class LessonService {
         lesson.setChapter(chapter);
         lesson.setOrderIndex(maxOrderIndex + 1);
 
-        return lessonMapper.toLessonResponse(lessonRepository.save(lesson));
+        return lessonMapper.toLessonResponseBase(lessonRepository.save(lesson));
     }
+
+    @Transactional
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
+    public LessonResponse updateLesson(String lessonId,
+                                       LessonRequest request) throws AppException {
+
+
+        Lesson lesson = lessonRepository.findById(lessonId)
+                .orElseThrow(() -> new AppException(ErrorCode.LESSON_NOT_FOUND));
+        lessonMapper.updateLesson(lesson, request);
+
+        return lessonMapper.toLessonResponseBase(lessonRepository.save(lesson));
+    }
+
+
+    public LessonResponse buildLesson(LessonSummaryProjection lessonSummaries,
+                                      AccessDecision accessDecision,
+                                      Set<String> completedLessons) {
+
+        boolean isCompleted = completedLessons.contains(lessonSummaries.getId());
+        boolean isPreview   = Boolean.TRUE.equals(lessonSummaries.getIsPreview());
+        boolean canSeeMedia = accessDecision.isHasFullAccess() || isPreview;
+
+        LessonResponse response = lessonMapper.toLessonResponse(lessonSummaries);
+        if(canSeeMedia) {
+            response.setFileUrl(lessonSummaries.getFileUrl());
+            response.setVideoUrl(lessonSummaries.getVideoUrl());
+            response.setIsCompleted(isCompleted);
+        }
+        response.setIsLocked(!canSeeMedia);
+        return response;
+
+    }
+
 
 
 
@@ -68,7 +94,6 @@ public class LessonService {
         log.info("Service: delete Lesson");
         lessonRepository.deleteById(lessonId);
     }
-
 
 
 }

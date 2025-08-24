@@ -3,7 +3,6 @@ package V1Learn.spring.DTO.Response;
 
 
 
-import V1Learn.spring.utils.LessonType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -15,15 +14,14 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LessonResponse {
     String id;
-    String title;
+    String name;
     String description;
-    LessonType lessonType;
-    String videoId;
     String videoUrl;
-    String fileId;
     String fileUrl;
     Integer videoDuration;
     Integer orderIndex;
-    Boolean isFree;
+    Boolean isPreview;
+    Boolean isCompleted;
     Boolean isPublished;
+    Boolean isLocked;
 }
