@@ -43,9 +43,6 @@ public class CloudinaryService {
 
 
 
-
-
-
     public CreateSignatureResponse createSignature(CreateSignatureRequest req) {
         long ts = System.currentTimeMillis() / 1000L;
         Map<String, Object> params = new HashMap<>();

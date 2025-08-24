@@ -1,9 +1,8 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.CourseLevel;
-import V1Learn.spring.utils.CourseStatus;
-
+import V1Learn.spring.enums.CourseLevel;
+import V1Learn.spring.enums.CourseStatus;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
@@ -34,8 +33,8 @@ public class Course extends AbstractEntity {
     @Column(name = "language")
     String language;
 
-    @Column(name = "price", nullable = false)
-    BigDecimal price;
+    @Column(name = "price")
+    BigDecimal price = BigDecimal.ZERO;
 
     @Column(name = "discount_price")
     BigDecimal discountPrice;
@@ -52,8 +51,8 @@ public class Course extends AbstractEntity {
     @Column(name = "video_public_id")
     String videoPublicId;
 
-    @Column(name = "total_duration", nullable = false)
-    Integer totalDuration = 2;
+    @Column(name = "total_duration")
+    Long totalDuration = 2L;
 
     @Column(name = "what_will_i_learn", columnDefinition = "TEXT")
     String whatWillILearn;

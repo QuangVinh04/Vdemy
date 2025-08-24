@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -38,8 +39,7 @@ public class Chapter extends AbstractEntity  {
     @JsonBackReference
     Course course;
 
-    @OneToMany(mappedBy = "chapter", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference
-    Set<Lesson> lessons;
+    @OneToMany(mappedBy = "chapter", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Lesson> lessons;
 
 }

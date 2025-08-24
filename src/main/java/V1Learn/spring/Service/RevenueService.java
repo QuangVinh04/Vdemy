@@ -1,21 +1,15 @@
 package V1Learn.spring.Service;
 
 
-import V1Learn.spring.DTO.Request.ProfileUpdateRequest;
 import V1Learn.spring.DTO.Response.DashboardSummaryResponse;
 import V1Learn.spring.DTO.Response.MonthlyRevenueResponse;
 import V1Learn.spring.DTO.Response.OrderEarningResponse;
-import V1Learn.spring.DTO.Response.ProfileResponse;
-import V1Learn.spring.Entity.Payment;
 import V1Learn.spring.Entity.User;
 import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
-import V1Learn.spring.Mapper.ProfileMapper;
 import V1Learn.spring.Repostiory.CourseRepository;
 import V1Learn.spring.Repostiory.PaymentRepository;
 import V1Learn.spring.Repostiory.UserRepository;
-import V1Learn.spring.utils.EnrollmentStatus;
-import V1Learn.spring.utils.PaymentStatus;
 import V1Learn.spring.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -23,15 +17,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Service

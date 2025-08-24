@@ -1,13 +1,12 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.Gender;
+import V1Learn.spring.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
-import java.util.Set;
 
 @Data
 @Builder

@@ -1,7 +1,7 @@
 package V1Learn.spring.DTO.Request;
 
 
-import V1Learn.spring.utils.CourseLevel;
+import V1Learn.spring.enums.CourseLevel;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -32,7 +32,7 @@ public class CourseUpdateRequest {
     BigDecimal price;
 
     @NotBlank(message = "Danh mục không được để trống")
-    String category;
+    String categoryId;
 
     @NotBlank(message = "Ngôn ngữ không được để trống")
     String language;

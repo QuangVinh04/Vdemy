@@ -9,7 +9,7 @@ import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
 import V1Learn.spring.Mapper.admin.AdminCourseMapper;
 import V1Learn.spring.Repostiory.CourseRepository;
-import V1Learn.spring.utils.CourseStatus;
+import V1Learn.spring.enums.CourseStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

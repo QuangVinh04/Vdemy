@@ -1,7 +1,7 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.Gender;
+import V1Learn.spring.enums.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

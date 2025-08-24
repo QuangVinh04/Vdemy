@@ -5,7 +5,7 @@ import V1Learn.spring.DTO.Response.APIResponse;
 import V1Learn.spring.DTO.Response.PageResponse;
 import V1Learn.spring.DTO.Response.RegisterTeacherResponse;
 import V1Learn.spring.Service.RegisterTeacherService;
-import V1Learn.spring.utils.InstructorApplicationStatus;
+import V1Learn.spring.enums.InstructorApplicationStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

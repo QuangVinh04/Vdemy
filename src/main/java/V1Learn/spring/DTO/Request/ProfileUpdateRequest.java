@@ -1,10 +1,9 @@
 package V1Learn.spring.DTO.Request;
 
-import V1Learn.spring.utils.Gender;
+import V1Learn.spring.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 

@@ -1,47 +1,26 @@
 package V1Learn.spring.Service;
 
-import V1Learn.spring.DTO.Request.ReplyReviewRequest;
 import V1Learn.spring.DTO.Response.NotificationResponse;
-import V1Learn.spring.DTO.Response.PageResponse;
-import V1Learn.spring.DTO.Response.ReviewResponse;
 import V1Learn.spring.DTO.event.NotificationEvent;
-import V1Learn.spring.DTO.event.ReviewRequest;
-import V1Learn.spring.Entity.Course;
 import V1Learn.spring.Entity.Notification;
-import V1Learn.spring.Entity.Review;
 import V1Learn.spring.Entity.User;
 import V1Learn.spring.Exception.AppException;
 import V1Learn.spring.Exception.ErrorCode;
-import V1Learn.spring.Mapper.ReviewMapper;
-import V1Learn.spring.Repostiory.CourseRepository;
 import V1Learn.spring.Repostiory.NotificationRepository;
-import V1Learn.spring.Repostiory.ReviewRepository;
 import V1Learn.spring.Repostiory.UserRepository;
-import V1Learn.spring.utils.NotificationType;
 import V1Learn.spring.utils.SecurityUtils;
-import jakarta.persistence.Id;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Slf4j
 @Service

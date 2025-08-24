@@ -1,8 +1,8 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.PaymentMethod;
-import V1Learn.spring.utils.PaymentStatus;
+import V1Learn.spring.enums.PaymentMethod;
+import V1Learn.spring.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

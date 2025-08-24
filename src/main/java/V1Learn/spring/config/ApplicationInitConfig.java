@@ -1,11 +1,13 @@
 package V1Learn.spring.config;
 
+import V1Learn.spring.Entity.Category;
 import V1Learn.spring.Entity.User;
 import V1Learn.spring.Entity.Role;
+import V1Learn.spring.Repostiory.CategoryRepository;
 import V1Learn.spring.Repostiory.RoleRepository;
 import V1Learn.spring.Repostiory.UserRepository;
 import V1Learn.spring.constant.PredefinedRole;
-import V1Learn.spring.utils.UserStatus;
+import V1Learn.spring.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -40,7 +42,9 @@ public class ApplicationInitConfig {
     @ConditionalOnProperty(prefix = "spring",
     value = "datasource.driverClassName",
     havingValue = "com.mysql.cj.jdbc.Driver", matchIfMissing = true)
-    ApplicationRunner applicationRunner(UserRepository userRepository, RoleRepository roleRepository) {
+    ApplicationRunner applicationRunner(UserRepository userRepository,
+                                        RoleRepository roleRepository,
+                                        CategoryRepository categoryRepository) {
         log.info("Initializing application.....");
         return args -> {
             Optional<Role> userRole = roleRepository.findByName(PredefinedRole.USER_ROLE);
@@ -84,6 +88,16 @@ public class ApplicationInitConfig {
                 userRepository.save(user);
                 log.warn("admin user has been created with default password: admin, please change it");
             }
+
+            if(categoryRepository.count() == 0){
+                categoryRepository.save(Category.builder()
+                        .name("Default")
+                        .description("Default category created automatically")
+                        .isActive(true)
+                        .build());
+            }
+
+
             log.info("Application initialization completed .....");
         };
     }

@@ -3,7 +3,7 @@ package V1Learn.spring.Service;
 import V1Learn.spring.DTO.event.NotificationEvent;
 import V1Learn.spring.DTO.event.ReviewRequest;
 
-import V1Learn.spring.utils.NotificationType;
+import V1Learn.spring.enums.NotificationType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

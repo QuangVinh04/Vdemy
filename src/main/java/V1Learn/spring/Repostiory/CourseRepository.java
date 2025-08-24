@@ -2,7 +2,8 @@ package V1Learn.spring.Repostiory;
 
 import V1Learn.spring.Entity.Course;
 
-import V1Learn.spring.utils.CourseStatus;
+import V1Learn.spring.enums.CourseStatus;
+import V1Learn.spring.projection.CourseStatsProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -19,10 +20,9 @@ import java.util.Optional;
 public interface CourseRepository extends JpaRepository<Course, String>, JpaSpecificationExecutor<Course> {
 
     @Query("SELECT DISTINCT c FROM Course c " +
-            "LEFT JOIN FETCH c.chapters ch " +
-            "LEFT JOIN FETCH ch.lessons " +
-            "WHERE c.id = :courseId")
-    Optional<Course> findCourseWithChaptersAndLessons(@Param("courseId") String courseId);
+            "LEFT JOIN FETCH c.instructor i " +
+            "WHERE c.id = :courseId" )
+    Optional<Course> findCourseBasicInfo(@Param("courseId") String courseId);
 
     Page<Course> findCourseByInstructorId(@Param("instructorId") String instructorId, Pageable pageable);
 
@@ -44,5 +44,22 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
     boolean existsByThumbnailPublicId(String publicId);
 
     boolean existsByVideoPublicId(String publicId);
-}
 
+    @Query("SELECT COUNT(c) FROM Course c " +
+            "WHERE c.instructor.id = :id")
+    Integer countByInstructorId(@Param("id") String id);
+
+    @Query("""
+  SELECT new V1Learn.spring.projection.CourseStatsProjection(
+    COUNT(DISTINCT e.id),
+    AVG(r.rating),
+    COUNT(r.id)
+    )
+  FROM Course c
+  LEFT JOIN Enrollment e ON e.course.id = c.id
+  LEFT JOIN Review r ON r.course.id = c.id
+  WHERE c.id = :courseId
+  GROUP BY c.id
+  """)
+    Optional<CourseStatsProjection> getCourseStats(@Param("courseId") String courseId);
+}

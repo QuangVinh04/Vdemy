@@ -1,6 +1,6 @@
 package V1Learn.spring.Entity;
 
-import V1Learn.spring.utils.ResourceType;
+import V1Learn.spring.enums.ResourceType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

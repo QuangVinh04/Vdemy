@@ -1,8 +1,8 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.Gender;
-import V1Learn.spring.utils.UserStatus;
+import V1Learn.spring.enums.Gender;
+import V1Learn.spring.enums.UserStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;

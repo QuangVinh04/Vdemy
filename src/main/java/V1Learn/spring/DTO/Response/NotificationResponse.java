@@ -1,11 +1,9 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.Gender;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data

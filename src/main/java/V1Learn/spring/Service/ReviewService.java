@@ -1,7 +1,6 @@
 package V1Learn.spring.Service;
 
 import V1Learn.spring.DTO.Request.ReplyReviewRequest;
-import V1Learn.spring.DTO.Response.CourseTeacherResponse;
 import V1Learn.spring.DTO.Response.ReviewTeacherResponse;
 import V1Learn.spring.DTO.event.NotificationEvent;
 import V1Learn.spring.DTO.event.ReviewRequest;
@@ -16,8 +15,7 @@ import V1Learn.spring.Mapper.ReviewMapper;
 import V1Learn.spring.Repostiory.CourseRepository;
 import V1Learn.spring.Repostiory.ReviewRepository;
 import V1Learn.spring.Repostiory.UserRepository;
-import V1Learn.spring.utils.EnrollmentStatus;
-import V1Learn.spring.utils.NotificationType;
+import V1Learn.spring.enums.NotificationType;
 import V1Learn.spring.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

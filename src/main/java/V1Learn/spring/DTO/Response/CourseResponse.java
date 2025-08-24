@@ -2,13 +2,13 @@ package V1Learn.spring.DTO.Response;
 
 
 
-import V1Learn.spring.Entity.Category;
-import V1Learn.spring.utils.CourseLevel;
-import V1Learn.spring.utils.CourseStatus;
+import V1Learn.spring.enums.CourseLevel;
+import V1Learn.spring.enums.CourseStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 
+import java.util.List;
 import java.util.Set;
 
 
@@ -31,7 +31,7 @@ public class CourseResponse {
     String videoUrl;
     CourseStatus status;
     String category;
-    Set<ChapterResponse> chapters;
+    List<ChapterResponse> chapters;
     Boolean step1Completed = false;
     Boolean step2Completed = false;
     Boolean step3Completed = false;

@@ -1,14 +1,11 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.CourseLevel;
-import V1Learn.spring.utils.CourseStatus;
-import V1Learn.spring.utils.ResourceType;
+import V1Learn.spring.enums.ResourceType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 
 @Data

@@ -2,12 +2,7 @@ package V1Learn.spring.DTO.Request;
 
 
 
-import V1Learn.spring.utils.CourseLevel;
-import jakarta.validation.constraints.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 
@@ -15,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @Getter
+@NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CourseCreationRequest {

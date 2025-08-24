@@ -1,7 +1,7 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.InstructorApplicationStatus;
+import V1Learn.spring.enums.InstructorApplicationStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

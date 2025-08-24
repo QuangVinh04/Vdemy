@@ -1,4 +1,4 @@
-//package V1Learn.spring.utils;
+package V1Learn.spring.enums;//package V1Learn.spring.utils;
 //
 //
 //import V1Learn.spring.Entity.Course;

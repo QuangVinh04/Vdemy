@@ -1,8 +1,6 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.Entity.User;
-import V1Learn.spring.utils.CourseLevel;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;

@@ -11,6 +11,8 @@ import V1Learn.spring.Mapper.CourseMapper;
 import V1Learn.spring.Mapper.LessonMapper;
 import V1Learn.spring.Repostiory.*;
 import V1Learn.spring.Repostiory.specification.CourseSpecificationsBuilder;
+import V1Learn.spring.enums.CourseStatus;
+import V1Learn.spring.enums.EnrollmentStatus;
 import V1Learn.spring.utils.*;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -36,76 +38,9 @@ public class CourseService {
     UserRepository userRepository;
     CourseRepository courseRepository;
     CourseMapper courseMapper;
-    ChapterMapper chapterMapper;
-    LessonMapper lessonMapper;
-    CloudinaryService cloudinaryService;
-    RedisService redisService;
-
     EnrollmentRepository enrollmentRepository;
     CategoryRepository categoryRepository;
 
-//    @Transactional
-//    @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
-//    public CourseResponse createCourse(CourseCreationRequest request,
-//                                       MultipartFile thumbnail,
-//                                       MultipartFile introVideo,
-//                                       Map<String, MultipartFile> lessonVideos) {
-//        log.info("Service: create Course");
-//
-//        String userId = SecurityUtils.getCurrentUserId()
-//                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-//        User instructor = userRepository.findById(userId)
-//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-//
-//        // Create the course
-//        Course course = courseMapper.toCourse(request);
-//        course.setInstructor(instructor);
-//
-//
-//        // Handle course thumbnail and video uploads
-//        if(thumbnail != null || introVideo != null) {
-//            courseMediaHelper.handleMediaUpload(course, thumbnail, introVideo, false);
-//        }
-//
-//        // Create chapters and lessons
-//        Set<Chapter> chapters = new HashSet<>();
-//        if(request.getChapters() != null && !request.getChapters().isEmpty()) {
-//
-//            for (int chapterIndex = 0; chapterIndex < request.getChapters().size(); chapterIndex++) {
-//                Chapter chapter = chapterMapper.toChapter(request.getChapters().get(chapterIndex));
-//                chapter.setCourse(course);
-//                chapter.setOrderIndex(chapterIndex);
-//
-//
-//                Set<Lesson> lessons = new HashSet<>();
-//                List<LessonRequest> lessonRequests = request.getChapters().get(chapterIndex).getLessons();
-//
-//                for (int lessonIndex = 0; lessonIndex < lessonRequests.size(); lessonIndex++) {
-//                    Lesson lesson = lessonMapper.toLesson(lessonRequests.get(lessonIndex));
-//                    lesson.setOrderIndex(lessonIndex);
-//
-//                    String videoKey = String.format("lessonVideos[%d][%d]", chapterIndex, lessonIndex);
-//                    MultipartFile lessonVideo = lessonVideos != null ? lessonVideos.get(videoKey) : null;
-//                    if(lessonVideo != null) {
-//                        String videoUrl = cloudinaryService.uploadLesson(lessonVideo, lessonRequests.get(lessonIndex).getContentType());
-//                        lesson.setContentUrl(videoUrl);
-//                    }
-//                    lesson.setChapter(chapter);
-//                    lessons.add(lesson);
-//
-//                }
-//                chapter.setLessons(lessons);
-//                chapters.add(chapter);
-//            }
-//        }
-//        course.setChapters(chapters);
-//        courseRepository.save(course);
-//        CourseResponse courseResponse = courseMapper.toCourseResponse(course);
-//        courseResponse.setInstructorName(instructor.getFullName());
-//        courseResponse.setInstructorAvatar(instructor.getAvatar());
-//
-//        return courseResponse;
-//    }
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER') and isAuthenticated()")
     public CourseResponse createNewCourse(CourseCreationRequest request) {
@@ -118,6 +53,9 @@ public class CourseService {
         Course course = new Course();
         course.setInstructor(instructor);
         course.setStatus(CourseStatus.DRAFT);
+        Category category = categoryRepository.findFirstByOrderByCreatedAtAsc()
+                    .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        course.setCategory(category);
 
         if (request.getTempTitle() != null && !request.getTempTitle().isEmpty()) {
             course.setTitle(request.getTempTitle());
@@ -139,6 +77,10 @@ public class CourseService {
 
         Course course = getOwnedCourse(courseId);
         courseMapper.updateCourse(course, request);
+        Category category = categoryRepository.findById(request.getCategoryId())
+                        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        course.setCategory(category);
+        category.getCourses().add(course);
 
         courseRepository.save(course);
         return courseMapper.toCourseResponse(course);
@@ -169,66 +111,6 @@ public class CourseService {
     }
 
 
-//    public CourseResponse getCourseDetail(String courseId) {
-//        log.info("Service: get Course Detail");
-//
-//        Course course = courseRepository.findCourseWithChaptersAndLessons(courseId)
-//                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-//
-//        Optional<String> optionalUserId = SecurityUtils.getCurrentUserId();
-//        User user = null;
-//        List<Enrollment> enrollment;
-//        Payment payment = null;
-//
-//        if (optionalUserId.isPresent()) {
-//            user = userRepository.findById(optionalUserId.get())
-//                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-//            enrollment = enrollmentRepository.findByUserAndCourseId(user, courseId);
-//            if (!enrollment.isEmpty()) {
-//               for(Enrollment e : enrollment){
-//                   if(e.getStatus().equals(EnrollmentStatus.COMPLETED)){
-//                       payment = e.getPayment();
-//                   }
-//               }
-//            }
-//        }
-//
-//        CourseResponse courseResponse = courseMapper.toCourseResponse(course);
-//        courseResponse.setInstructorAvatar(course.getInstructor().getAvatar());
-//        courseResponse.setInstructorName(course.getInstructor().getFullName());
-//
-//        boolean hasAccess = SecurityUtils.hasRole("ADMIN")
-//                || (user != null && course.getInstructor().getId().equals(user.getId()))
-//                || (payment != null && payment.getStatus().equals(PaymentStatus.COMPLETED))
-//                ||(user != null && course.getPrice().equals(BigDecimal.ZERO));
-//
-//        courseResponse.setChapters(course.getChapters().stream()
-//                .sorted(Comparator.comparingInt(Chapter::getOrderIndex))
-//                .map(chapter -> ChapterResponse.builder()
-//                        .id(chapter.getId())
-//                        .title(chapter.getTitle())
-//                        .description(chapter.getDescription())
-//                        .lessons(chapter.getLessons().stream()
-//                                .sorted(Comparator.comparingInt(Lesson::getOrderIndex))
-//                                .map(lesson -> {
-//                                    if (hasAccess) {
-//                                        return lessonMapper.toLessonResponse(lesson);
-//                                    } else {
-//                                        return LessonResponse.builder()
-//                                                .id(lesson.getId())
-//                                                .name(lesson.getName())
-//                                                .description(lesson.getDescription())
-//                                                .contentUrl(null) // ẩn nội dung video
-//                                                .build();
-//                                    }
-//                                })
-//                                .collect(Collectors.toCollection(LinkedHashSet::new)))
-//                        .build())
-//                .collect(Collectors.toCollection(LinkedHashSet::new)));
-//
-//        return courseResponse;
-//    }
-
     public CourseResponse getBasicCourseInfo(String courseId){
         log.info("Service: get BasicCourseInfo");
         Course course = courseRepository.findById(courseId)
@@ -239,9 +121,6 @@ public class CourseService {
         response.setInstructorAvatar(course.getInstructor().getAvatar());
         return response;
     }
-
-
-
 
 
     public CourseResponse getCourseById(String courseID) {
@@ -295,8 +174,6 @@ public class CourseService {
         return getPageResponse(pageable, courses);
 
     }
-
-
 
 
     public PageResponse advanceSearchWithSpecifications(Pageable pageable, String[] course) {

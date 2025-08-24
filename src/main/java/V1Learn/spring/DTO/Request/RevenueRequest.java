@@ -1,6 +1,6 @@
 package V1Learn.spring.DTO.Request;
 
-import V1Learn.spring.utils.PeriodType;
+import V1Learn.spring.enums.PeriodType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

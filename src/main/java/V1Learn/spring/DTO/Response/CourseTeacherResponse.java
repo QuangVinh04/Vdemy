@@ -1,8 +1,8 @@
 package V1Learn.spring.DTO.Response;
 
 
-import V1Learn.spring.utils.CourseLevel;
-import V1Learn.spring.utils.CourseStatus;
+import V1Learn.spring.enums.CourseLevel;
+import V1Learn.spring.enums.CourseStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

@@ -2,7 +2,7 @@ package V1Learn.spring.DTO.event;
 
 
 
-import V1Learn.spring.utils.NotificationType;
+import V1Learn.spring.enums.NotificationType;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 

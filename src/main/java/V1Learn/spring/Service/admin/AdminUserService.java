@@ -13,7 +13,7 @@ import V1Learn.spring.Repostiory.RegisterTeacherRepository;
 import V1Learn.spring.Repostiory.RoleRepository;
 import V1Learn.spring.Repostiory.UserRepository;
 
-import V1Learn.spring.utils.UserStatus;
+import V1Learn.spring.enums.UserStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

@@ -1,7 +1,7 @@
 package V1Learn.spring.Repostiory.specification;
 
 import V1Learn.spring.Entity.Course;
-import V1Learn.spring.utils.CourseLevel;
+import V1Learn.spring.enums.CourseLevel;
 import jakarta.persistence.criteria.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

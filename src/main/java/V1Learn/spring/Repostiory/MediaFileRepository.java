@@ -2,7 +2,7 @@ package V1Learn.spring.Repostiory;
 
 
 import V1Learn.spring.Entity.MediaFile;
-import V1Learn.spring.utils.ResourceType;
+import V1Learn.spring.enums.ResourceType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

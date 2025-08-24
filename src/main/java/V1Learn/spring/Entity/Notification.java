@@ -2,7 +2,7 @@ package V1Learn.spring.Entity;
 
 
 
-import V1Learn.spring.utils.NotificationType;
+import V1Learn.spring.enums.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;

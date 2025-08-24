@@ -1,6 +1,6 @@
 package V1Learn.spring.Entity;
 
-import V1Learn.spring.utils.OrderStatus;
+import V1Learn.spring.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -38,24 +38,24 @@ public class Order extends AbstractEntity {
     OrderStatus status;
 
     @Column(name = "payment_transaction_id")
-    private String paymentTransactionId;
+    String paymentTransactionId;
 
     @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    LocalDateTime paidAt;
 
     @Column(name = "cancelled_at")
-    private LocalDateTime cancelledAt;
+    LocalDateTime cancelledAt;
 
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    User user;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<OrderItem> orderItems;
+    Set<OrderItem> orderItems;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Payment> payments;
+    Set<Payment> payments;
 
     @PrePersist
     protected void onCreate() {

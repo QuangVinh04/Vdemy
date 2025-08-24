@@ -2,7 +2,7 @@ package V1Learn.spring.DTO.Request;
 
 
 
-import V1Learn.spring.utils.ResourceType;
+import V1Learn.spring.enums.ResourceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;

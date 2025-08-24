@@ -1,9 +1,7 @@
 package V1Learn.spring.Repostiory;
 
 import V1Learn.spring.Entity.User;
-import V1Learn.spring.constant.PredefinedRole;
-import V1Learn.spring.utils.EnrollmentStatus;
-import V1Learn.spring.utils.UserStatus;
+import V1Learn.spring.enums.UserStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

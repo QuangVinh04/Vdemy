@@ -1,7 +1,7 @@
 package V1Learn.spring.Entity;
 
 
-import V1Learn.spring.utils.InstructorApplicationStatus;
+import V1Learn.spring.enums.InstructorApplicationStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
