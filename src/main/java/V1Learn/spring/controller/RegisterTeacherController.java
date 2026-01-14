@@ -1,10 +1,10 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Request.RegisterTeacherRequest;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.PageResponse;
-import V1Learn.spring.DTO.Response.RegisterTeacherResponse;
-import V1Learn.spring.Service.RegisterTeacherService;
+import V1Learn.spring.dto.request.RegisterTeacherRequest;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.PageResponse;
+import V1Learn.spring.dto.response.RegisterTeacherResponse;
+import V1Learn.spring.service.RegisterTeacherService;
 import V1Learn.spring.enums.InstructorApplicationStatus;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

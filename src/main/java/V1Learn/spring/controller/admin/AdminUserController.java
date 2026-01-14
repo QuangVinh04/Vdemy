@@ -1,11 +1,11 @@
 package V1Learn.spring.controller.admin;
 
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.PageResponse;
-import V1Learn.spring.DTO.Response.UserDetailResponse;
-import V1Learn.spring.DTO.Response.admin.AdminUserResponse;
-import V1Learn.spring.Service.admin.AdminUserService;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.PageResponse;
+import V1Learn.spring.dto.response.UserDetailResponse;
+import V1Learn.spring.dto.response.admin.AdminUserResponse;
+import V1Learn.spring.service.admin.AdminUserService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

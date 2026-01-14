@@ -1,12 +1,12 @@
 package V1Learn.spring.controller;
 
 
-import V1Learn.spring.DTO.Request.*;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.AuthenticationResponse;
-import V1Learn.spring.DTO.Response.IntrospectResponse;
-import V1Learn.spring.DTO.Response.RefreshTokenResponse;
-import V1Learn.spring.Service.AuthenticationService;
+import V1Learn.spring.dto.request.*;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.AuthenticationResponse;
+import V1Learn.spring.dto.response.IntrospectResponse;
+import V1Learn.spring.dto.response.RefreshTokenResponse;
+import V1Learn.spring.service.AuthenticationService;
 import com.nimbusds.jose.JOSEException;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AccessLevel;

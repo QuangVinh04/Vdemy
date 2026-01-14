@@ -1,7 +1,7 @@
 package V1Learn.spring.config;
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.Exception.ErrorCode;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.exception.ErrorCode;
 import com.fasterxml.jackson.databind.ObjectMapper; // công cụ của Jackson giúp chuyển đổi đối tượng Java thành JSON.
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

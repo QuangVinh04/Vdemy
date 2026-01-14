@@ -3,13 +3,13 @@
 package V1Learn.spring.controller;
 
 
-import V1Learn.spring.DTO.Request.CreateSignatureRequest;
-import V1Learn.spring.DTO.Request.MediaUploadRequest;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.CreateSignatureResponse;
-import V1Learn.spring.DTO.Response.MediaFileResponse;
-import V1Learn.spring.Service.CloudinaryService;
-import V1Learn.spring.Service.MediaFileService;
+import V1Learn.spring.dto.request.CreateSignatureRequest;
+import V1Learn.spring.dto.request.MediaUploadRequest;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.CreateSignatureResponse;
+import V1Learn.spring.dto.response.MediaFileResponse;
+import V1Learn.spring.service.CloudinaryService;
+import V1Learn.spring.service.MediaFileService;
 
 import jakarta.validation.Valid;
 import lombok.AccessLevel;

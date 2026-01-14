@@ -1,0 +1,35 @@
+package V1Learn.spring.dto.response;
+
+
+import V1Learn.spring.enums.ResourceType;
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import java.time.LocalDateTime;
+
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
+public class MediaFileResponse {
+    String id;
+    String publicId;
+    String secureUrl;
+    String originalFilename;
+    ResourceType resourceType;
+    String format;
+    Long bytes;
+    Integer width;
+    Integer height;
+    Integer duration;
+    String folder;
+    String title;
+    String caption;
+    String description;
+    String uploadedBy;
+    Boolean isPublic;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
+}

@@ -1,10 +1,11 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Request.ReplyReviewRequest;
-import V1Learn.spring.DTO.event.ReviewRequest;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.PageResponse;
-import V1Learn.spring.Service.ReviewService;
+import V1Learn.spring.dto.request.ReplyReviewRequest;
+import V1Learn.spring.dto.event.ReviewRequest;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.PageResponse;
+import V1Learn.spring.service.ReviewService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,7 +24,7 @@ public class ReviewController {
     ReviewService reviewService;
 
     @PostMapping()
-    APIResponse<?> createReview(@RequestBody ReviewRequest reviewRequest) {
+    APIResponse<?> createReview(@RequestBody @Valid ReviewRequest reviewRequest) {
         log.info("Creating a review for course [{}]", reviewRequest.getCourseId());
         reviewService.sendReview(reviewRequest);
         return APIResponse.builder()
@@ -55,7 +56,7 @@ public class ReviewController {
 
     @PutMapping("/{reviewId}")
     public APIResponse<?> update(@PathVariable("reviewId") String reviewId,
-                                    @RequestBody ReviewRequest request) {
+                                @RequestBody @Valid ReviewRequest request) {
         log.info(" updating review [{}]", reviewId);
         reviewService.updateReview(request, reviewId);
         return APIResponse.builder()

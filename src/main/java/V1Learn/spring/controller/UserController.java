@@ -1,19 +1,15 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Request.*;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.UserResponse;
-import V1Learn.spring.Service.UserService;
+import V1Learn.spring.dto.request.*;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.UserResponse;
+import V1Learn.spring.service.UserService;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;

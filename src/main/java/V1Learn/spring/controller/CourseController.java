@@ -1,12 +1,12 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Request.*;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.CourseResponse;
-import V1Learn.spring.DTO.Response.PageResponse;
-import V1Learn.spring.Service.CourseDetailService;
-import V1Learn.spring.Service.CourseDraftService;
-import V1Learn.spring.Service.CourseService;
+import V1Learn.spring.dto.request.*;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.CourseResponse;
+import V1Learn.spring.dto.response.PageResponse;
+import V1Learn.spring.service.CourseDetailService;
+import V1Learn.spring.service.CourseService;
+import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -15,29 +15,27 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/courses")
 @Slf4j
 public class CourseController {
     CourseService courseService;
     CourseDetailService courseDetailService;
-    CourseDraftService courseDraftService;
 
 
 
     @PostMapping(value = "/create-course")
     public APIResponse<CourseResponse> createCourse(
-            @RequestBody CourseCreationRequest request) {
+            @RequestBody @Valid CourseCreationRequest request) {
         log.info("Request creating new course");
         var result = courseService.createNewCourse(request);
         return APIResponse.<CourseResponse>builder()
@@ -51,7 +49,7 @@ public class CourseController {
     @PutMapping(value = "/update-course/{courseId}")
     public APIResponse<CourseResponse> updateCourse(
             @PathVariable String courseId,
-            @RequestBody CourseUpdateRequest request) {
+            @RequestBody @Valid CourseUpdateRequest request) {
         log.info("Request updating course with ID: {}", courseId);
         return APIResponse.<CourseResponse>builder()
                 .result(courseService.updateCourse(courseId, request))
@@ -67,20 +65,17 @@ public class CourseController {
                 .build();
     }
 
-    @PostMapping("/course/create-preview")
-    APIResponse<?> createPreview(@ModelAttribute CourseUpdateRequest request,
-                                @RequestParam(required = false) String courseId) {
-        log.info("Controller: create Preview");
-        return APIResponse.builder()
-                .result(courseDraftService.savePreview(courseId, request))
-                .build();
-    }
 
-    @GetMapping("/course/get-preview")
-    APIResponse<?> getPreview(String courseId) {
+
+    @GetMapping("/{courseId}/preview")
+    APIResponse<?> getPreview(@PathVariable String courseId) {
         log.info("Controller: get preview Courses");
+        Set<String> fields = Set.of("basic", "instructor",
+                "stats",
+                "chapters",
+                "chapters.lessons");
         return APIResponse.builder()
-                .result(courseDraftService.getPreview(courseId))
+                .result(courseDetailService.getCourseDetail(courseId, fields, true))
                 .build();
     }
 
@@ -94,7 +89,7 @@ public class CourseController {
     }
 
 
-    @GetMapping(path = "/courses", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getAllCourses(
             @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
@@ -105,7 +100,7 @@ public class CourseController {
                 .build();
     }
 
-    @GetMapping(path = "/teacher/courses", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/teacher", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getCoursesByTeacher(
             @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
             Pageable pageable) {
@@ -116,7 +111,7 @@ public class CourseController {
                 .build();
     }
 
-    @GetMapping(path = "/user/me/courses", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(path = "/me", produces = MediaType.APPLICATION_JSON_VALUE)
     public APIResponse<?> getCoursesByUser(
             @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
             Pageable pageable) {
@@ -129,27 +124,27 @@ public class CourseController {
 
 
 
-    @GetMapping("/course/{courseId}")
+    @GetMapping("/{courseId}")
     public APIResponse<?> getCourseById(@PathVariable String courseId) {
         log.info("Request course by ID: {}", courseId);
         return APIResponse.builder().result(courseService.getCourseById(courseId)).build();
     }
 
-    @GetMapping("/course-detail/{courseId}")
+    @GetMapping("/{courseId}/detail")
     public APIResponse<?> getCourseDetail(@PathVariable String courseId,
-                                          @RequestParam(name = "fields", required = false) String fieldsParam) {
+                                          @RequestParam(name = "fields", required = false) String fieldsParam){
 
         Set<String> fields = parseFields(fieldsParam);
         log.info("Request course detail by ID: {}", courseId);
         return APIResponse.builder()
-                .result(courseDetailService.getCourseDetail(courseId, fields))
+                .result(courseDetailService.getCourseDetail(courseId, fields, false))
                 .message("Get course detail successful")
                 .build();
     }
 
 
 
-    @GetMapping(path = "/search-course-by-specification")
+    @GetMapping(path = "/search")
     public APIResponse<PageResponse> searchCourses(
             @PageableDefault(page = 0, size = 10, sort = "createdAT", direction = Sort.Direction.DESC)
             Pageable pageable,

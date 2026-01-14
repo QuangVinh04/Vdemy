@@ -1,9 +1,9 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Request.ChapterRequest;
-import V1Learn.spring.DTO.Response.ChapterResponse;
-import V1Learn.spring.Service.ChapterService;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.request.ChapterRequest;
+import V1Learn.spring.dto.response.ChapterResponse;
+import V1Learn.spring.service.ChapterService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

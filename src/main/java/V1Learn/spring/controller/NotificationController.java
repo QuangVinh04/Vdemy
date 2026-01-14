@@ -1,8 +1,8 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.NotificationResponse;
-import V1Learn.spring.Service.NotificationService;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.NotificationResponse;
+import V1Learn.spring.service.NotificationService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;

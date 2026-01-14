@@ -26,6 +26,9 @@ public class VNPayConfig {
     @Value("${payment.vnPay.url}")
     String vnp_PayUrl;
 
+    @Value("${payment.vnPay.ipnUrl}")
+    String vnp_IpnUrl;
+
     @Value("${payment.vnPay.returnUrl}")
     String vnp_ReturnUrl;
 
@@ -55,7 +58,10 @@ public class VNPayConfig {
         vnpParams.put("vnp_CurrCode", "VND");
         vnpParams.put("vnp_OrderType", this.orderType);
         vnpParams.put("vnp_Locale", "vn");
+
         vnpParams.put("vnp_ReturnUrl", this.vnp_ReturnUrl);
+        vnpParams.put("vnp_IpnUrl", this.vnp_IpnUrl);
+
         vnpParams.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
         return vnpParams;
     }

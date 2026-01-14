@@ -1,6 +1,6 @@
 package V1Learn.spring.config;
 
-import V1Learn.spring.Service.UserDetailServiceCustomizer;
+import V1Learn.spring.service.UserDetailServiceCustomizer;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -31,15 +31,15 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private static final String[] PUBLIC_ENDPOINTS = {"/api/v1/auth/login",  // <-- Bổ sung prefix chính xác
-            "/auth/token",
-            "/auth/introspect",
-            "/auth/logout",
-            "/auth/refresh",
+            "/auth/v1/token",
+            "/auth/v1/introspect",
+            "/auth/v1/logout",
+            "/auth/v1/refresh",
             "/api/v1/**",
-            "/api/v1/course-detail/{courseId}",
+            "/api/v1/courses/*",
             "/api/v1/check-enrolled/{courseId}",
-            "/api/v1/review/course-review/{courseId}",
-            "/api/v1/auth/introspect",
+            "/api/v1/review/course-review/*",
+
             "/ws/**"
     };
 

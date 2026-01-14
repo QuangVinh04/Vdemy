@@ -1,18 +1,15 @@
 package V1Learn.spring.controller;
 
 
-import V1Learn.spring.DTO.Request.ProfileUpdateRequest;
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.ProfileResponse;
-import V1Learn.spring.Service.CloudinaryService;
-import V1Learn.spring.Service.ProfileService;
+import V1Learn.spring.dto.request.ProfileUpdateRequest;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.ProfileResponse;
+import V1Learn.spring.service.CloudinaryService;
+import V1Learn.spring.service.ProfileService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 

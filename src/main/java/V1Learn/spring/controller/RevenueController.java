@@ -1,10 +1,10 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Response.DashboardSummaryResponse;
-import V1Learn.spring.DTO.Response.MonthlyRevenueResponse;
-import V1Learn.spring.DTO.Response.OrderEarningResponse;
-import V1Learn.spring.Service.RevenueService;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.response.DashboardSummaryResponse;
+import V1Learn.spring.dto.response.MonthlyRevenueResponse;
+import V1Learn.spring.dto.response.OrderEarningResponse;
+import V1Learn.spring.service.RevenueService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

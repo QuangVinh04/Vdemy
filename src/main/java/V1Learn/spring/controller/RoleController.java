@@ -1,9 +1,9 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.DTO.Response.APIResponse;
-import V1Learn.spring.DTO.Request.RoleRequest;
-import V1Learn.spring.DTO.Response.RoleResponse;
-import V1Learn.spring.Service.RoleService;
+import V1Learn.spring.dto.response.APIResponse;
+import V1Learn.spring.dto.request.RoleRequest;
+import V1Learn.spring.dto.response.RoleResponse;
+import V1Learn.spring.service.RoleService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;

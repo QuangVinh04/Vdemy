@@ -1,11 +1,11 @@
 package V1Learn.spring.config;
 
-import V1Learn.spring.Entity.Category;
-import V1Learn.spring.Entity.User;
-import V1Learn.spring.Entity.Role;
-import V1Learn.spring.Repostiory.CategoryRepository;
-import V1Learn.spring.Repostiory.RoleRepository;
-import V1Learn.spring.Repostiory.UserRepository;
+import V1Learn.spring.entity.Category;
+import V1Learn.spring.entity.User;
+import V1Learn.spring.entity.Role;
+import V1Learn.spring.repository.CategoryRepository;
+import V1Learn.spring.repository.RoleRepository;
+import V1Learn.spring.repository.UserRepository;
 import V1Learn.spring.constant.PredefinedRole;
 import V1Learn.spring.enums.UserStatus;
 import lombok.AccessLevel;
