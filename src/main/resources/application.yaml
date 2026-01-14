@@ -121,9 +121,9 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: "jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3307}/railway"
-    username: ${MYSQL_USER:root}
-    password: ${MYSQL_PASSWORD:root}
+    url: "jdbc:mysql://root:glqCeZmiLvBrGmlOVnmiQNDwiMLsjBcO@shortline.proxy.rlwy.net:35514/railway"
+    username: root
+    password: glqCeZmiLvBrGmlOVnmiQNDwiMLsjBcO
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     properties:
@@ -138,8 +138,8 @@ spring:
       client:
         registration:
           google:
-            client-id: 771347288925-bc1qpjq2u4vwnyxe3u0flg8hfp3c8mfmd9f38ydu07.apps.googleusercontent.com
-            client-secret: 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
+            client-id: 
+            client-secret: 
             redirect-uri: "http://localhost:3000/authenticate"
             scope:
               - email
@@ -157,10 +157,10 @@ spring:
 
 
   mail:
-    from: vinhqlnq98@gmail.com
-    port: 587
-    username: vinhqlnq98
-    password: cchopncssaamides
+    from: 
+    port: 
+    username: 
+    password: 
     properties:
       mail:
         smtp:
