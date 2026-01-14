@@ -138,8 +138,8 @@ spring:
       client:
         registration:
           google:
-            client-id: 
-            client-secret: 
+            client-id: 771347288925-bc1qpjq2u4vwnyxe3u0flg8hfp3c8mfmd9f38ydu07.apps.googleusercontent.com
+            client-secret: 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
             redirect-uri: "http://localhost:3000/authenticate"
             scope:
               - email
@@ -151,16 +151,16 @@ spring:
 
   data:
     redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
+      host: ${{ RAILWAY_PRIVATE_DOMAIN }}
+      port: 6379
 
 
 
   mail:
-    from: 
-    port: 
-    username: 
-    password: 
+    from: vinhqlnq98@gmail.com
+    port: 587
+    username: vinhqlnq98
+    password: cchopncssaamides
     properties:
       mail:
         smtp:
