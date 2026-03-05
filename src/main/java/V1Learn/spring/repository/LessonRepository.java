@@ -1,6 +1,5 @@
 package V1Learn.spring.repository;
 
-
 import V1Learn.spring.entity.Lesson;
 import V1Learn.spring.projection.LessonSummaryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,16 +10,14 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
-
 @Repository
 public interface LessonRepository extends JpaRepository<Lesson, String> {
-    @Query("SELECT MAX(c.orderIndex) FROM Lesson c WHERE c.chapter.id = :chapterId")
-    Optional<Integer> findMaxOrderIndexByChapterId(String chapterId);
+  @Query("SELECT MAX(c.orderIndex) FROM Lesson c WHERE c.chapter.id = :chapterId")
+  Optional<Integer> findMaxOrderIndexByChapterId(String chapterId);
 
+  boolean existsByVideoPublicId(String publicId);
 
-    boolean existsByVideoPublicId(String publicId);
-
-    @Query("""
+  @Query("""
       SELECT new V1Learn.spring.projection.LessonSummaryProjection(
           l.id,
           l.name,
@@ -35,9 +32,8 @@ public interface LessonRepository extends JpaRepository<Lesson, String> {
           l.chapter.id
       )
       FROM Lesson l
-      WHERE l.chapter.id IN :chapterIds
+      WHERE l.chapter.course.id = :courseId
       ORDER BY l.chapter.orderIndex, l.orderIndex
       """)
-    List<LessonSummaryProjection> findLessonsByChapterIds(@Param("chapterIds") List<String> chapterIds);
+  List<LessonSummaryProjection> findLessonsByCourseId(@Param("courseId") String courseId);
 }
-

@@ -1,6 +1,5 @@
 package V1Learn.spring.service;
 
-
 import V1Learn.spring.dto.request.ChapterRequest;
 import V1Learn.spring.dto.response.ChapterResponse;
 import V1Learn.spring.entity.Chapter;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,7 +29,7 @@ public class ChapterService {
     CourseRepository courseRepository;
     ChapterMapper chapterMapper;
     ChapterRepository chapterRepository;
-
+    CourseCacheService courseCacheService;
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
     public ChapterResponse createChapter(String courseId, ChapterRequest request) throws AppException {
@@ -46,10 +44,10 @@ public class ChapterService {
         Chapter chapter = chapterMapper.toChapter(request);
         chapter.setOrderIndex(maxOrderIndex + 1);
         chapter.setCourse(course);
-        return chapterMapper.toChapterResponse(chapterRepository.save(chapter));
+        ChapterResponse response = chapterMapper.toChapterResponse(chapterRepository.save(chapter));
+        courseCacheService.evictCourseContentCache(courseId);
+        return response;
     }
-
-
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
     public void updateChapter(String chapterId, ChapterRequest request) {
@@ -61,16 +59,19 @@ public class ChapterService {
         chapter.setTitle(request.getTitle());
         chapter.setDescription(request.getDescription());
         chapterRepository.save(chapter);
+        courseCacheService.evictCourseContentCache(chapter.getCourse().getId());
     }
 
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
     @Transactional
     public void deleteChapter(String chapterId) throws AppException {
         log.info("Service: delete Chapter");
-        chapterRepository.deleteById(chapterId);
+        Chapter chapter = chapterRepository.findById(chapterId)
+                .orElseThrow(() -> new AppException(ErrorCode.CHAPTER_NOT_FOUND));
+        String courseId = chapter.getCourse().getId();
+        chapterRepository.delete(chapter);
+        courseCacheService.evictCourseContentCache(courseId);
     }
-
-
 
     public List<ChapterResponse> getChaptersByCourseId(String courseId) {
         List<Chapter> chapters = chapterRepository.findByCourseId(courseId);
@@ -83,7 +84,5 @@ public class ChapterService {
                         .build())
                 .collect(Collectors.toList());
     }
-
-
 
 }

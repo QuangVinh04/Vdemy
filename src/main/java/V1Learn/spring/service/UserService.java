@@ -69,8 +69,8 @@ public class UserService {
         String verifyCode = mailService.generateVerifyCode();
 
         // lưu mã vào redis có thời hạn 10p
-        redisService.setWithTTL(CONFIRM_USER + request.getEmail(), verifyCode, System.currentTimeMillis() + 600000, TimeUnit.MILLISECONDS); // 10 phút
-        // lưu tạm tài khoản tạm thời khóa chờ xác nhận để kích hoạt
+        redisService.setWithTTL(CONFIRM_USER + request.getEmail(), verifyCode, 10, TimeUnit.MINUTES);
+
         userRepository.save(user);
 
         mailService.sendConfirmLink(request.getEmail(), verifyCode);
@@ -137,7 +137,7 @@ public class UserService {
             throw new AppException(ErrorCode.USER_NOT_ACTIVE);
         }
         String otp = mailService.generateVerifyCode();
-        redisService.setWithTTL(RESET_PASSWORD_CODE + request.getEmail(), otp, System.currentTimeMillis() + 600000, TimeUnit.MILLISECONDS); // 10 phút
+        redisService.setWithTTL(RESET_PASSWORD_CODE + request.getEmail(), otp, 10, TimeUnit.MINUTES); // 10 phút
         mailService.sendConfirmLink(request.getEmail(), otp);
         log.info("{}{}", RESET_PASSWORD_CODE, request.getEmail());
         log.info(otp);
