@@ -1,0 +1,29 @@
+# =====================================================================
+# VDEMY - Development Profile (application-dev.yaml)
+# =====================================================================
+# Môi trường phát triển cá nhân (localhost)
+#
+# Cách chạy:
+#   ./mvnw spring-boot:run
+#   (mặc định profile = dev, tự đọc .env.dev)
+#
+# File .env.dev chứa secrets + host config cho localhost
+# Thư viện spring-dotenv sẽ tự load file .env.dev
+# =====================================================================
+
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update   # Tự động cập nhật schema khi dev
+
+
+
+# ---- Logging (verbose khi dev) ----
+logging:
+  level:
+    V1Learn.spring: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

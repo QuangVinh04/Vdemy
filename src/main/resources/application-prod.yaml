@@ -1,0 +1,47 @@
+# =====================================================================
+# VDEMY - Production Profile
+# =====================================================================
+# Dành cho triển khai trên Docker / Kubernetes
+# Active: SPRING_PROFILES_ACTIVE=prod (set trong .env hoặc K8s ConfigMap)
+#
+# Toàn bộ secrets PHẢI đến từ environment variables, không hardcode!
+# =====================================================================
+
+spring:
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate   # KHÔNG tự ý sửa schema trên production
+
+  datasource:
+    url: "jdbc:mysql://${MYSQL_HOST:mysql}:${MYSQL_PORT:3306}/web_course"
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+
+# ---- Logging - chỉ WARN/ERROR, ghi ra file ----
+logging:
+  level:
+    root: WARN
+    V1Learn.spring: INFO
+    org.springframework.web: WARN
+    org.springframework.security: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /var/log/vdemy/application.log
+  logback:
+    rolling policy:
+      max-file-size: 10MB
+      max-history: 15
