@@ -47,6 +47,9 @@ public enum ErrorCode {
     COURSE_NOT_AVAILABLE(3008, "Course not available", HttpStatus.BAD_REQUEST),
     COURSE_ALREADY_OWNED(3009, "Course already owned", HttpStatus.BAD_REQUEST),
     COURSE_CANNOT_ADD_OWN_COURSE_TO_CART(3010, "Cannot add own course to cart", HttpStatus.BAD_REQUEST),
+    ALREADY_ENROLLED(3011, "Already enrolled", HttpStatus.BAD_REQUEST),
+
+
     // Review
     REVIEW_INVALID_RATING(3011, "Invalid rating", HttpStatus.BAD_REQUEST),
     REVIEW_CONTENT_REQUIRED(3012, "Content is required", HttpStatus.BAD_REQUEST),

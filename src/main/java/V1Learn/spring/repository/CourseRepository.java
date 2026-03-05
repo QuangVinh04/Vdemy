@@ -13,7 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 @Repository
@@ -23,6 +25,12 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
             "LEFT JOIN FETCH c.instructor i " +
             "WHERE c.id = :courseId" )
     Optional<Course> findCourseBasicInfo(@Param("courseId") String courseId);
+
+    // Lấy nhiều course cùng lúc bằng list ID
+    @Query("SELECT c FROM Course c " +
+            "LEFT JOIN FETCH c.instructor i " +
+            "WHERE c.id IN :courseIds")
+    List<Course> findBasicInfoByIds(@Param("courseIds") Set<String> courseIds);
 
     Page<Course> findCourseByInstructorId(@Param("instructorId") String instructorId, Pageable pageable);
 

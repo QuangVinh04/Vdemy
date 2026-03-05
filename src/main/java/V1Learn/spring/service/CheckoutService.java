@@ -1,16 +1,19 @@
 package V1Learn.spring.service;
 
 import V1Learn.spring.dto.request.CheckoutCreationRequest;
+import V1Learn.spring.dto.request.CheckoutItemRequest;
 import V1Learn.spring.dto.response.CheckoutResponse;
 import V1Learn.spring.entity.Checkout;
 import V1Learn.spring.entity.CheckoutItem;
 import V1Learn.spring.entity.Course;
 import V1Learn.spring.enums.CheckoutState;
+import V1Learn.spring.enums.CourseStatus;
 import V1Learn.spring.exception.AppException;
 import V1Learn.spring.exception.ErrorCode;
 import V1Learn.spring.mapper.CheckoutMapper;
 import V1Learn.spring.repository.CheckoutRepository;
 import V1Learn.spring.repository.CourseRepository;
+import V1Learn.spring.repository.EnrollmentRepository;
 import V1Learn.spring.utils.SecurityUtils;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,6 +36,7 @@ import java.util.stream.Collectors;
 public class CheckoutService {
 
     CourseService courseService;
+    EnrollmentRepository enrollmentRepository;
     CourseRepository courseRepository;
     CheckoutRepository checkoutRepository;
     CheckoutMapper checkoutMapper;
@@ -46,7 +51,7 @@ public class CheckoutService {
         checkout.setUserId(userId);
         checkout.setCheckoutState(CheckoutState.PENDING);
 
-        prepareCheckoutItems(checkout, request);
+        prepareCheckoutItems(checkout, userId, request);
         checkout = checkoutRepository.save(checkout);
 
         log.info("Created checkout id: {} and userId: {} ", checkout.getId(), userId);
@@ -54,31 +59,59 @@ public class CheckoutService {
         return checkoutMapper.toCheckoutResponse(checkout);
     }
 
-    private void prepareCheckoutItems(Checkout checkout, CheckoutCreationRequest request) {
-        List<CheckoutItem> checkoutItems = request.getItems()
-                .stream()
-                .map(checkoutMapper::toCheckoutItem)
-                .peek(item -> item.setCheckout(checkout)).toList();
+    private void prepareCheckoutItems(Checkout checkout, String userId, CheckoutCreationRequest request) {
+        Set<String> courseIds = request.getItems().stream()
+                .map(CheckoutItemRequest::getCourseId)
+                .collect(Collectors.toSet());
 
-        Set<CheckoutItem> enrichedItems = checkoutItems.stream().map(item -> {
-            Course course = courseRepository.findById(item.getCourseId())
-                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+        List<Course> courses = courseRepository.findBasicInfoByIds(courseIds);
 
-            return CheckoutItem.builder()
-                    .checkout(checkout)
-                    .courseId(item.getCourseId())
-                    .price(course.getPrice())
-                    .discountPrice(course.getDiscountPrice())
-                    .build();
+        // Nếu số lượng khóa học tìm thấy ít hơn số lượng ID gửi lên -> Có ID ảo/không tồn tại
+        if (courses.size() != courseIds.size()) {
+            throw new AppException(ErrorCode.COURSE_NOT_FOUND);
+        }
+
+        Map<String, Course> courseMap = courses.stream()
+                .collect(Collectors.toMap(Course::getId, course -> course));
+
+        // Gọi DB đúng 1 LẦN để lấy toàn bộ các khóa học user ĐÃ MUA trong danh sách này
+        Set<String> enrolledCourseIds = enrollmentRepository.findEnrolledCourseIds(userId, courseIds);
+
+        // Bắt đầu vòng lặp xử lý logic
+        Set<CheckoutItem> enrichedItems = request.getItems().stream().map(requestItem -> {
+            CheckoutItem item = checkoutMapper.toCheckoutItem(requestItem);
+
+            // Trích xuất course từ Map đã lấy ở bước 2
+            Course course = courseMap.get(item.getCourseId());
+
+            // Kiểm tra nghiệp vụ
+            if (course.getInstructor().getId().equals(userId)) {
+                throw new AppException(ErrorCode.CANNOT_CHECKOUT_OWN_COURSE);
+            }
+            if (!CourseStatus.PUBLISHED.equals(course.getStatus())) {
+                throw new AppException(ErrorCode.COURSE_NOT_AVAILABLE);
+            }
+
+            // Kiểm tra user đã mua chưa bằng Set lấy ở bước 3
+            if (enrolledCourseIds.contains(course.getId())) {
+                throw new AppException(ErrorCode.ALREADY_ENROLLED);
+            }
+
+            // Gán dữ liệu
+            item.setCheckout(checkout); // Đã loại bỏ peek() nguy hiểm
+            item.setPrice(course.getPrice());
+            item.setDiscountPrice(course.getDiscountPrice());
+
+            return item;
         }).collect(Collectors.toSet());
 
+        // Tính tổng tiền
         BigDecimal totalAmount = enrichedItems.stream()
-                .map(CheckoutItem::getPrice)
+                .map(item -> item.getDiscountPrice() != null ? item.getDiscountPrice() : item.getPrice()) // Ưu tiên giá giảm
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         checkout.setItems(enrichedItems);
         checkout.setTotalAmount(totalAmount);
-
     }
 
     @Transactional

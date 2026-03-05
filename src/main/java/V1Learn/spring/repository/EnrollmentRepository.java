@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 
 @Repository
@@ -36,24 +37,10 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
 
     boolean existsByUserIdAndCourseId(String userId, String courseId);
 
+    // Lấy ra danh sách các courseId mà user này đã mua từ một danh sách courseId cho trước
+    @Query("SELECT e.course.id FROM Enrollment e WHERE e.user.id = :userId AND e.course.id IN :courseIds")
+    Set<String> findEnrolledCourseIds(@Param("userId") String userId, @Param("courseIds") Set<String> courseIds);
+
     Page<Enrollment> findByUserId(String userId, Pageable pageable);
-
-//    @Query("""
-//    SELECT new  V1Learn.spring.DTO.Response.UserEnrolledResponse(
-//        u.id, u.firstName, u.lastName, u.phone, u.email, u.dob, u.gender, u.address, u.avatar, e.createdAT
-//    )
-//    FROM Enrollment e
-//    JOIN e.user u
-//    WHERE e.course.instructor.id = :instructorId AND e.status = :status
-//    """)
-//    Page<UserEnrolledResponse> findAllByInstructorId(@Param("instructorId") String instructorId,
-//                                                     @Param("status") EnrollmentStatus status,
-//                                                     Pageable pageable);
-
-//    @Query("""
-//        SELECT e FROM Enrollment e
-//        WHERE e.user.id = :userId AND e.course.instructor.id = :teacherId
-//    """)
-//    Optional<Enrollment> findByUserIdAndInstructorId(@Param("userId") String userId, @Param("teacherId") String teacherId);
 
 }
