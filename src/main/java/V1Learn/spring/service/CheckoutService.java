@@ -12,6 +12,7 @@ import V1Learn.spring.exception.AppException;
 import V1Learn.spring.exception.ErrorCode;
 import V1Learn.spring.mapper.CheckoutMapper;
 import V1Learn.spring.repository.CheckoutRepository;
+import V1Learn.spring.repository.CourseAccessRepository;
 import V1Learn.spring.repository.CourseRepository;
 import V1Learn.spring.repository.EnrollmentRepository;
 import V1Learn.spring.utils.SecurityUtils;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 public class CheckoutService {
 
     CourseService courseService;
-    EnrollmentRepository enrollmentRepository;
+    CourseAccessRepository courseAccessRepository;
     CourseRepository courseRepository;
     CheckoutRepository checkoutRepository;
     CheckoutMapper checkoutMapper;
@@ -75,7 +76,7 @@ public class CheckoutService {
                 .collect(Collectors.toMap(Course::getId, course -> course));
 
         // Gọi DB đúng 1 LẦN để lấy toàn bộ các khóa học user ĐÃ MUA trong danh sách này
-        Set<String> enrolledCourseIds = enrollmentRepository.findEnrolledCourseIds(userId, courseIds);
+        Set<String> accessibleCourseIds = courseAccessRepository.findValidAccessCourseIds(userId, courseIds);
 
         // Bắt đầu vòng lặp xử lý logic
         Set<CheckoutItem> enrichedItems = request.getItems().stream().map(requestItem -> {
@@ -93,8 +94,8 @@ public class CheckoutService {
             }
 
             // Kiểm tra user đã mua chưa bằng Set lấy ở bước 3
-            if (enrolledCourseIds.contains(course.getId())) {
-                throw new AppException(ErrorCode.ALREADY_ENROLLED);
+            if (accessibleCourseIds.contains(course.getId())) {
+                throw new AppException(ErrorCode.COURSE_ALREADY_OWNED);
             }
 
             // Gán dữ liệu

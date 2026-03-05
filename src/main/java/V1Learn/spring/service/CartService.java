@@ -66,13 +66,13 @@ public class CartService {
             throw new AppException(ErrorCode.COURSE_NOT_AVAILABLE);
         }
 
-        // 2. ✅ SỬA: Kiểm tra user đã có quyền truy cập (đã mua) chưa - dùng
+        // Kiểm tra user đã có quyền truy cập (đã mua) chưa - dùng
         // CourseAccess
         if (courseAccessService.hasPurchasedAccess(user.getId(), course.getId())) {
             throw new AppException(ErrorCode.COURSE_ALREADY_OWNED);
         }
 
-        // 3. Kiểm tra user không phải là instructor của course
+        // Kiểm tra user không phải là instructor của course
         if (course.getInstructor().getId().equals(user.getId())) {
             throw new AppException(ErrorCode.COURSE_CANNOT_ADD_OWN_COURSE_TO_CART);
         }

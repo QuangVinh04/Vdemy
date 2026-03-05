@@ -37,10 +37,6 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, String> 
 
     boolean existsByUserIdAndCourseId(String userId, String courseId);
 
-    // Lấy ra danh sách các courseId mà user này đã mua từ một danh sách courseId cho trước
-    @Query("SELECT e.course.id FROM Enrollment e WHERE e.user.id = :userId AND e.course.id IN :courseIds")
-    Set<String> findEnrolledCourseIds(@Param("userId") String userId, @Param("courseIds") Set<String> courseIds);
-
     Page<Enrollment> findByUserId(String userId, Pageable pageable);
 
 }
