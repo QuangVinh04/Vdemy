@@ -142,7 +142,7 @@ public class AuthenticationService {
         Date expiryTime = signedTokenRefresh.getJWTClaimsSet().getExpirationTime();
 
         // Lưu refresh token vào Redis có key là refresh + userId;
-        redisService.setWithTTL("refresh:" + user.getId(), refreshToken, expiryTime.getTime(), TimeUnit.MILLISECONDS);
+        redisService.setUntil("refresh:" + user.getId(), refreshToken, expiryTime.getTime());
 
         addRefreshToCookie(refreshToken, httpResponse);
 
@@ -176,7 +176,7 @@ public class AuthenticationService {
         Date expiryTime = signedTokenRefresh.getJWTClaimsSet().getExpirationTime();
 
         // Lưu refresh token vào Redis có key là refresh + userId;
-        redisService.setWithTTL("refresh:" + user.getId(), refreshToken, expiryTime.getTime(), TimeUnit.MILLISECONDS);
+        redisService.setUntil("refresh:" + user.getId(), refreshToken, expiryTime.getTime());
 
         log.info("Refresh token stored in Redis for userId={}, expiry={}", user.getId(), expiryTime);
         addRefreshToCookie(refreshToken, response);
@@ -191,47 +191,49 @@ public class AuthenticationService {
     public void logout(LogoutRequest request, HttpServletResponse response) throws ParseException, JOSEException {
         try {
             var signedToken = jwtService.verifyToken(request.getAccessToken());
-            String jit = signedToken.getJWTClaimsSet().getJWTID();
+            String jti = signedToken.getJWTClaimsSet().getJWTID();
             Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
-
-            String refreshKey = "refresh:" + signedToken.getJWTClaimsSet().getSubject();
-
-            // Đánh dấu Access Token là blacklist + jit
-            redisService.setWithTTL("blacklist:" + jit, request.getAccessToken(), expiryTime.getTime(),
-                    TimeUnit.MILLISECONDS);
+            String userId = signedToken.getJWTClaimsSet().getSubject();
+            redisService.setUntil("blacklist:" + jti, "true",  expiryTime.getTime());
             // Xóa RefreshToken trong Redis
-            redisService.deleteValue(refreshKey);
-            // xóa khỏi cookie
+            redisService.deleteValue("refresh:" + userId);
+
             deleteRefreshTokenCookie(response);
         } catch (AppException exception) {
-            log.info("Token already expired");
+            log.info("Token already expired or invalid, just clearing cookies");
+            deleteRefreshTokenCookie(response);
         }
     }
 
     public RefreshTokenResponse refreshToken(String refreshToken, String accessToken)
             throws ParseException, JOSEException {
-        // kiểm tra refreshToken lưu trong redis
+
         var signedJWT = jwtService.verifyToken(refreshToken);
-        String refreshKey = "refresh:" + signedJWT.getJWTClaimsSet().getSubject();
-        String storedRefreshToken = redisService.getValue(refreshKey).toString();
+        String userId = signedJWT.getJWTClaimsSet().getSubject();
+        String refreshKey = "refresh:" + userId;
 
-        log.info("refreshKey:{} and storedRefreshToken:{}", refreshKey, storedRefreshToken);
-
-        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+        // 1. Kiểm tra Refresh Token trong Redis
+        Object storedValue = redisService.getValue(refreshKey);
+        if (storedValue == null || !storedValue.toString().equals(refreshToken)) {
             throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
         }
-        // Thêm accessToken vào blacklist
-        if (accessToken != null) {
-            SignedJWT jwt = SignedJWT.parse(accessToken);
-            var jwtTid = jwt.getJWTClaimsSet().getJWTID();
-            long accessTokenExp = jwt.getJWTClaimsSet().getExpirationTime().getTime();
-            redisService.setWithTTL("blacklist:" + jwtTid, accessToken, accessTokenExp, TimeUnit.MILLISECONDS);
-        }
 
-        String email = signedJWT.getJWTClaimsSet().getSubject();
-        User user = userRepository.findByEmail(email)
+        // 2. Blacklist Access Token cũ (nếu nó chưa hết hạn)
+        if (accessToken != null) {
+            try {
+                SignedJWT oldJwt = SignedJWT.parse(accessToken);
+                String jti = oldJwt.getJWTClaimsSet().getJWTID();
+                long exp = oldJwt.getJWTClaimsSet().getExpirationTime().getTime();
+                redisService.setUntil("blacklist:" + jti, "true", exp);
+
+            } catch (Exception e) {
+                log.warn("Could not blacklist old access token: {}", e.getMessage());
+            }
+        }
+        // 3. Tạo mới Access Token
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-        // tạo access token mới
+
         var newAccessToken = jwtService.generateAccessToken(user);
 
         return RefreshTokenResponse.builder()

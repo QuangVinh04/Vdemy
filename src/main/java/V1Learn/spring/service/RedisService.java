@@ -22,16 +22,27 @@ public class RedisService {
         redisTemplate.opsForValue().set(key, value);
     }
 
-    // Lưu dữ liệu vào Redis với thời gian hết hạn (TTL)
+    // Set với TTL
     // timeout: là thời gian dữ liệu tồn tại trong Redis
     // timeunit: đơn vị thời gian của timeout
     public void setWithTTL(String key, Object value, long timeout, TimeUnit unit) {
         log.info("timeout = {} and unit = {}", timeout, unit);
-        timeout = Math.max(timeout - System.currentTimeMillis(), 0); // tính thời gian hết hạn từ lúc hệ thống tạo ra
         if (timeout <= 0 || unit == null) {
             throw new IllegalArgumentException("Invalid timeout or unit");
         }
         redisTemplate.opsForValue().set(key, value, timeout, unit);
+    }
+
+
+    // Set dựa trên mốc thời gian hết hạn (Timestamp)
+    // Dùng cho trường hợp Logout/Blacklist/Refresh Token
+    public void setUntil(String key, Object value, long expirationTimestampMs) {
+        long ttl = expirationTimestampMs - System.currentTimeMillis();
+        if (ttl > 0) {
+            this.setWithTTL(key, value, ttl, TimeUnit.MILLISECONDS);
+        } else {
+            log.warn("Expiration time for key {} is in the past.", key);
+        }
     }
 
     // Lấy dữ liệu từ Redis
