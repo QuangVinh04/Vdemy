@@ -21,8 +21,6 @@ import org.springframework.web.multipart.MultipartFile;
 public class ProfileController {
 
     ProfileService profileService;
-    CloudinaryService cloudinaryService;
-
     @PutMapping("/update-profile")
     APIResponse<Void> updateProfile(@RequestBody ProfileUpdateRequest request){
         profileService.updateProfile(request);

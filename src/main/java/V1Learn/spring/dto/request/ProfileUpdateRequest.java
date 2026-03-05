@@ -13,6 +13,7 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProfileUpdateRequest {
+    String id;
     String firstName;
     String lastName;
     Gender gender;
