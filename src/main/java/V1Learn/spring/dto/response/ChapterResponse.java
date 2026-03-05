@@ -8,6 +8,7 @@ import lombok.experimental.FieldDefaults;
 
 
 import java.util.List;
+import java.util.Set;
 
 
 @Data
@@ -22,5 +23,5 @@ public class ChapterResponse {
     Integer orderIndex;
     Long totalLessons;
     Long totalDuration;
-    List<LessonResponse> lessons;
+    Set<LessonResponse> lessons;
 }

@@ -8,7 +8,8 @@ public enum CheckoutState {
     PAYMENT_PROCESSING("Payment Processing"),
     PAYMENT_FAILED("Payment Failed"),
     PAYMENT_CONFIRMED("Payment Confirmed"),
-    FULFILLED("Fulfilled")
+    FULFILLED("Fulfilled"),
+    EXPIRED("Expired")
     ;
     private final String name;
 

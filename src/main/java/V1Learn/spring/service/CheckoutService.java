@@ -48,6 +48,9 @@ public class CheckoutService {
         String userId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
+        // Expire checkout PENDING cũ của user
+        expireOldPendingCheckouts(userId);
+
         Checkout checkout = checkoutMapper.toCheckout(request);
         checkout.setUserId(userId);
         checkout.setCheckoutState(CheckoutState.PENDING);
@@ -67,7 +70,8 @@ public class CheckoutService {
 
         List<Course> courses = courseRepository.findBasicInfoByIds(courseIds);
 
-        // Nếu số lượng khóa học tìm thấy ít hơn số lượng ID gửi lên -> Có ID ảo/không tồn tại
+        // Nếu số lượng khóa học tìm thấy ít hơn số lượng ID gửi lên -> Có ID ảo/không
+        // tồn tại
         if (courses.size() != courseIds.size()) {
             throw new AppException(ErrorCode.COURSE_NOT_FOUND);
         }
@@ -108,7 +112,8 @@ public class CheckoutService {
 
         // Tính tổng tiền
         BigDecimal totalAmount = enrichedItems.stream()
-                .map(item -> item.getDiscountPrice() != null ? item.getDiscountPrice() : item.getPrice()) // Ưu tiên giá giảm
+                .map(item -> item.getDiscountPrice() != null ? item.getDiscountPrice() : item.getPrice()) // Ưu tiên giá
+                                                                                                          // giảm
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         checkout.setItems(enrichedItems);
@@ -161,6 +166,20 @@ public class CheckoutService {
         }
 
         return checkoutMapper.toCheckoutResponse(checkout);
+    }
+
+    /**
+     * Chỉ expire checkout PENDING cũ — nhẹ nhàng, không đụng order/payment
+     * Checkout PAYMENT_PROCESSING sẽ do Scheduled Job xử lý
+     */
+    private void expireOldPendingCheckouts(String userId) {
+        List<Checkout> pendingCheckouts = checkoutRepository
+                .findByUserIdAndCheckoutState(userId, CheckoutState.PENDING);
+        for (Checkout old : pendingCheckouts) {
+            old.setCheckoutState(CheckoutState.EXPIRED);
+            checkoutRepository.save(old);
+            log.info("Expired old pending checkout: {}", old.getId());
+        }
     }
 
 }

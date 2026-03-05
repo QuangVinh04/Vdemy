@@ -1,6 +1,5 @@
 package V1Learn.spring.service;
 
-import V1Learn.spring.dto.request.CheckoutItemRequest;
 import V1Learn.spring.dto.response.OrderResponse;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.entity.*;
@@ -12,12 +11,10 @@ import V1Learn.spring.exception.ErrorCode;
 import V1Learn.spring.mapper.OrderMapper;
 import V1Learn.spring.repository.*;
 import V1Learn.spring.utils.SecurityUtils;
-import jakarta.persistence.EntityManager;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -43,7 +39,6 @@ public class OrderService {
     CourseRepository courseRepository;
     OrderRepository orderRepository;
     OrderItemRepository orderItemRepository;
-    CourseAccessRepository courseAccessRepository;
     OrderMapper orderMapper;
     CourseAccessService courseAccessService;
     CheckoutService checkoutService;
@@ -84,10 +79,13 @@ public class OrderService {
                 .checkout(checkout)
                 .build();
 
-        // Create order items
+        // Save order TRƯỚC để có ID (không còn transient)
+        Order savedOrder = orderRepository.save(order);
+
+        // Tạo order items tham chiếu đến savedOrder (đã persist)
         Set<OrderItem> orderItems = checkout.getItems().stream()
                 .map(item -> OrderItem.builder()
-                        .order(order)
+                        .order(savedOrder)
                         .courseId(item.getCourseId())
                         .price(item.getPrice())
                         .discountPrice(item.getDiscountPrice())
@@ -95,14 +93,14 @@ public class OrderService {
                 .collect(Collectors.toSet());
 
         orderItemRepository.saveAll(orderItems);
-        order.setOrderItems(orderItems);
+        savedOrder.setOrderItems(orderItems);
 
         checkoutService.updateCheckoutState(checkoutId, CheckoutState.PAYMENT_PROCESSING);
 
         log.info("Successfully created order: {} for user: {}",
                 orderCode, user.getEmail());
 
-        return orderRepository.save(order);
+        return savedOrder;
     }
 
     /**
@@ -113,25 +111,9 @@ public class OrderService {
             throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
-        Set<String> courseIds = checkout.getItems().stream()
-                .map(CheckoutItem::getCourseId)
-                .collect(Collectors.toSet());
-
-        List<Course> courses = courseRepository.findBasicInfoByIds(courseIds);
-
-        if (courses.size() != courseIds.size()) {
-            throw new AppException(ErrorCode.COURSE_NOT_FOUND);
-        }
-
-        Map<String, Course> courseMap = courses.stream()
-                .collect(Collectors.toMap(Course::getId, course -> course));
-
-        // Gọi DB đúng 1 LẦN để lấy toàn bộ các khóa học user ĐÃ MUA trong danh sách này
-        Set<String> accessibleCourseIds = courseAccessRepository.findValidAccessCourseIds(userId, courseIds);
-
         for (CheckoutItem item : checkout.getItems()) {
-
-            Course course = courseMap.get(item.getCourseId());
+            Course course = courseRepository.findByIdWithInstructor(item.getCourseId())
+                    .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
 
             // 1. Kiểm tra course status
             if (course.getStatus() != CourseStatus.PUBLISHED) {
@@ -139,7 +121,7 @@ public class OrderService {
             }
 
             // 2. Kiểm tra user đã sở hữu course chưa
-            if (accessibleCourseIds.contains(course.getId())) {
+            if (courseAccessService.hasPurchasedAccess(userId, course.getId())) {
                 throw new AppException(ErrorCode.COURSE_ALREADY_OWNED);
             }
 
@@ -151,9 +133,7 @@ public class OrderService {
     }
 
     private String generateOrderCode() {
-        return String.format("ORD-%d-%s",
-                System.currentTimeMillis(),
-                UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        return "ORD-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
     }
 
     @Transactional(readOnly = true)

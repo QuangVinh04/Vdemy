@@ -12,12 +12,12 @@ import java.util.Set;
 @Builder
 @Entity
 @Table(name = "orders")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Order extends AbstractEntity {
-
 
     @Column(name = "order_code", unique = true, nullable = false)
     String orderCode;
@@ -55,10 +55,4 @@ public class Order extends AbstractEntity {
     @JoinColumn(name = "checkout_id")
     Checkout checkout;
 
-    @PrePersist
-    protected void onCreate() {
-        if (orderCode == null) {
-            orderCode = "ORD" + System.currentTimeMillis();
-        }
-    }
 }

@@ -21,7 +21,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -30,10 +29,9 @@ public class VNPayHandler implements PaymentHandler {
 
     VNPayConfig vnPayConfig;
 
-
     @Override
-    public String getProviderName() {
-        return PaymentMethod.VN_PAY.name();
+    public PaymentMethod getPaymentMethod() {
+        return PaymentMethod.VN_PAY;
     }
 
     @Override
@@ -56,16 +54,16 @@ public class VNPayHandler implements PaymentHandler {
         StringBuilder hashData = new StringBuilder();
         StringBuilder query = new StringBuilder();
 
-        for(Iterator<String> iterator = sortedFieldNames.iterator(); iterator.hasNext(); ) {
+        for (Iterator<String> iterator = sortedFieldNames.iterator(); iterator.hasNext();) {
             String fieldName = iterator.next();
             String value = params.get(fieldName);
 
-            if(value != null && !value.isEmpty()) {
+            if (value != null && !value.isEmpty()) {
                 hashData.append(fieldName).append("=").append(URLEncoder.encode(value, StandardCharsets.US_ASCII));
                 query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII))
                         .append("=")
                         .append(URLEncoder.encode(value, StandardCharsets.US_ASCII));
-                if(iterator.hasNext()) {
+                if (iterator.hasNext()) {
                     hashData.append("&");
                     query.append("&");
                 }
@@ -80,8 +78,6 @@ public class VNPayHandler implements PaymentHandler {
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
     }
-
-
 
     @Override
     public CapturedPayment handleCallback(Map<String, String> params) {
@@ -99,12 +95,10 @@ public class VNPayHandler implements PaymentHandler {
                 .paymentStatus(
                         "00".equals(responseCode)
                                 ? PaymentStatus.COMPLETED
-                                : PaymentStatus.FAILED
-                )
+                                : PaymentStatus.FAILED)
                 .rawResponse(params.toString())
                 .build();
     }
-
 
     // kiểm tra tính hợp lệ của chữ ký
     private boolean verifySignature(Map<String, String> params) {

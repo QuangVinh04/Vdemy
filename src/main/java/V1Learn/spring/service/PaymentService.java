@@ -1,11 +1,11 @@
 package V1Learn.spring.service;
 
-
 import V1Learn.spring.dto.event.PaymentResultEvent;
 import V1Learn.spring.dto.request.InitPaymentRequest;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.dto.response.PaymentResponse;
 import V1Learn.spring.dto.event.NotificationEvent;
+import V1Learn.spring.dto.response.VNPayIPNResponse;
 import V1Learn.spring.entity.*;
 import V1Learn.spring.enums.*;
 import V1Learn.spring.exception.AppException;
@@ -31,273 +31,308 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentService {
-    UserRepository userRepository;
-    CourseRepository courseRepository;
-    EnrollmentRepository enrollmentRepository;
-    PaymentRepository paymentRepository;
-    CheckoutRepository checkoutRepository;
-    KafkaTemplate<String, Object> kafkaTemplate;
+        UserRepository userRepository;
+        CourseRepository courseRepository;
+        EnrollmentRepository enrollmentRepository;
+        PaymentRepository paymentRepository;
+        CheckoutRepository checkoutRepository;
+        KafkaTemplate<String, Object> kafkaTemplate;
 
-    CheckoutService checkoutService;
-    OrderService orderService;
-    CourseAccessService courseAccessService;
-    EnrollmentService enrollmentService;
-    CartService cartService;
+        CheckoutService checkoutService;
+        OrderService orderService;
+        CourseAccessService courseAccessService;
+        EnrollmentService enrollmentService;
+        CartService cartService;
 
-    List<PaymentHandler> handlers;
-    Map<String, PaymentHandler> providerMap = new HashMap<>();
+        List<PaymentHandler> handlers;
+        Map<PaymentMethod, PaymentHandler> providerMap = new EnumMap<>(PaymentMethod.class);
 
-    final SimpMessagingTemplate messagingTemplate;
-    private final OrderRepository orderRepository;
+        final SimpMessagingTemplate messagingTemplate;
+        private final OrderRepository orderRepository;
 
-    @PostConstruct
-    public void init() {
-        for (PaymentHandler handler : handlers) {
-            providerMap.put(handler.getProviderName(), handler);
-        }
-    }
-
-    public PaymentHandler getHandler(String providerName) {
-        PaymentHandler handler = providerMap.get(providerName.toLowerCase());
-        if (handler == null) {
-            throw new RuntimeException("No handler found for: " + providerName);
-        }
-        return handler;
-    }
-
-
-
-    @Transactional
-    public PaymentResponse createPayment(InitPaymentRequest paymentRequest, HttpServletRequest request) {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        Checkout checkout = checkoutRepository.findById(paymentRequest.getCheckoutId())
-                .orElseThrow(() -> new AppException(ErrorCode.CHECKOUT_NOT_FOUND));
-
-        // Kiểm tra checkout có phải của người dùng không
-        if (!checkout.getUserId().equals(userId)) {
-            throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
+        @PostConstruct
+        public void init() {
+                for (PaymentHandler handler : handlers) {
+                        providerMap.put(handler.getPaymentMethod(), handler);
+                }
         }
 
-        // Cập nhật phương thức thanh toán vào checkout
-        checkoutService.updateCheckoutPaymentMethod(paymentRequest.getCheckoutId(),
-                paymentRequest.getPaymentMethod());
-
-        // 2. TẠO ORDER TỪ CHECKOUT
-        Order order = orderService.createOrderFromCheckout(paymentRequest.getCheckoutId());
-
-        Payment payment = Payment.builder()
-                .paymentMethod(PaymentMethod.valueOf(paymentRequest.getPaymentMethod()))
-                .amount(checkout.getTotalAmount())
-                .status(PaymentStatus.PENDING)
-                .order(order)
-                .build();
-
-        paymentRepository.save(payment);
-
-        // Lấy handler tương ứng
-        PaymentHandler handler = getHandler(paymentRequest.getPaymentMethod());
-
-        // Tạo paymentUrl
-        InitiatedPayment initiated = handler.initPayment(payment, request);
-
-        return PaymentResponse.builder()
-                .orderCode(order.getOrderCode())
-                .message("Payment created")
-                .paymentId(payment.getTransactionId())
-                .paymentUrl(initiated.getRedirectUrl())
-                .build();
-
-
-    }
-
-    @Transactional
-    public void handleCallback(String provider, Map<String, String> params) {
-
-        PaymentHandler handler = getHandler(provider);
-        CapturedPayment captured = handler.handleCallback(params);
-
-
-        Payment payment = paymentRepository
-                .findByTransactionId(captured.getTransactionId())
-                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
-
-        // chống callback trùng
-        if (payment.getStatus() == PaymentStatus.COMPLETED) {
-            log.warn("Payment {} already completed", payment.getTransactionId());
-            return;
+        public PaymentHandler getHandler(PaymentMethod method) {
+                PaymentHandler handler = providerMap.get(method);
+                if (handler == null) {
+                        throw new AppException(ErrorCode.PAYMENT_METHOD_NOT_SUPPORTED);
+                }
+                return handler;
         }
 
-        // verify amount
-        if (payment.getAmount().compareTo(captured.getAmount()) != 0) {
-            throw new AppException(ErrorCode.AMOUNT_MISMATCH);
+        @Transactional
+        public PaymentResponse createPayment(InitPaymentRequest paymentRequest, HttpServletRequest request) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+
+                // 1. Idempotency Key check — nếu key trùng → trả payment cũ
+                if (paymentRequest.getIdempotencyKey() != null && !paymentRequest.getIdempotencyKey().isBlank()) {
+                        Optional<Payment> idempotentPayment = paymentRepository
+                                        .findByIdempotencyKey(paymentRequest.getIdempotencyKey());
+                        if (idempotentPayment.isPresent()) {
+                                Payment p = idempotentPayment.get();
+                                PaymentHandler handler = getHandler(p.getPaymentMethod());
+                                InitiatedPayment initiated = handler.initPayment(p, request);
+
+                                log.info("Idempotent hit: returning existing payment for key: {}",
+                                                paymentRequest.getIdempotencyKey());
+                                return PaymentResponse.builder()
+                                                .orderCode(p.getOrder().getOrderCode())
+                                                .paymentId(p.getTransactionId())
+                                                .paymentUrl(initiated.getRedirectUrl())
+                                                .build();
+                        }
+                }
+
+                // 2. LOCK checkout để ngăn concurrent
+                Checkout checkout = checkoutRepository.findByIdWithLock(paymentRequest.getCheckoutId())
+                                .orElseThrow(() -> new AppException(ErrorCode.CHECKOUT_NOT_FOUND));
+
+                // 3. Kiểm tra checkout có phải của người dùng không
+                if (!checkout.getUserId().equals(userId)) {
+                        throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
+                }
+
+                // 4. Convert String → Enum
+                PaymentMethod paymentMethod = PaymentMethod.fromValue(paymentRequest.getPaymentMethod());
+
+                // 5. Check existing payment PENDING cho checkout này (user back + click lại)
+                Optional<Payment> existingPayment = paymentRepository.findByOrderCheckoutIdAndStatus(
+                                paymentRequest.getCheckoutId(), PaymentStatus.PENDING);
+
+                if (existingPayment.isPresent()) {
+                        Payment p = existingPayment.get();
+                        PaymentHandler handler = getHandler(p.getPaymentMethod());
+                        InitiatedPayment initiated = handler.initPayment(p, request);
+
+                        log.info("Returning existing payment URL for checkout: {}", paymentRequest.getCheckoutId());
+                        return PaymentResponse.builder()
+                                        .orderCode(p.getOrder().getOrderCode())
+                                        .paymentId(p.getTransactionId())
+                                        .paymentUrl(initiated.getRedirectUrl())
+                                        .build();
+                }
+
+                // 6. Không có payment cũ → chỉ cho phép tạo mới khi checkout PENDING
+                if (checkout.getCheckoutState() != CheckoutState.PENDING) {
+                        throw new AppException(ErrorCode.CHECKOUT_INVALID_STATE);
+                }
+
+                // 7. Kiểm tra user đã mua khóa học nào chưa
+                for (CheckoutItem item : checkout.getItems()) {
+                        if (courseAccessService.hasPurchasedAccess(userId, item.getCourseId())) {
+                                throw new AppException(ErrorCode.COURSE_ALREADY_OWNED);
+                        }
+                }
+
+                // 8. Cập nhật phương thức thanh toán vào checkout
+                checkout.setPaymentMethodId(paymentMethod.getValue());
+                checkoutRepository.save(checkout);
+
+                // 9. Tạo Order từ Checkout
+                Order order = orderService.createOrderFromCheckout(paymentRequest.getCheckoutId());
+
+                Payment payment = Payment.builder()
+                                .paymentMethod(paymentMethod)
+                                .amount(checkout.getTotalAmount())
+                                .status(PaymentStatus.PENDING)
+                                .order(order)
+                                .idempotencyKey(paymentRequest.getIdempotencyKey())
+                                .build();
+
+                paymentRepository.save(payment);
+
+                // Lấy handler tương ứng
+                PaymentHandler handler = getHandler(paymentMethod);
+
+                // Tạo paymentUrl
+                InitiatedPayment initiated = handler.initPayment(payment, request);
+
+                return PaymentResponse.builder()
+                                .orderCode(order.getOrderCode())
+                                .message("Payment created")
+                                .paymentId(payment.getTransactionId())
+                                .paymentUrl(initiated.getRedirectUrl())
+                                .build();
+
         }
 
-        payment.setStatus(captured.getPaymentStatus());
-        payment.setGatewayTransactionId(captured.getGatewayTransactionId());
-        payment.setGatewayRawResponse(captured.getRawResponse());
-        paymentRepository.save(payment);
+        @Transactional
+        public VNPayIPNResponse handleCallback(String provider, Map<String, String> params) {
+                try {
+                        PaymentMethod method = PaymentMethod.fromValue(provider);
+                        PaymentHandler handler = getHandler(method);
+                        CapturedPayment captured = handler.handleCallback(params);
 
+                        // Dùng Lock để đảm bảo tại một thời điểm chỉ 1 luồng xử lý Payment này
+                        Payment payment = paymentRepository
+                                        .findByTransactionIdWithLock(captured.getTransactionId())
+                                        .orElse(null);
 
-        Order order = payment.getOrder();
+                        if (payment == null) {
+                                return new VNPayIPNResponse("01", "Order not found");
+                        }
+                        // Nếu đã xử lý rồi thì báo thành công luôn cho VNPAY
+                        if (payment.getStatus() != PaymentStatus.PENDING) {
+                                return new VNPayIPNResponse("02", "Order already confirmed");
+                        }
 
-        if (captured.getPaymentStatus().equals(PaymentStatus.COMPLETED)) {
+                        // Verify số tiền
+                        if (payment.getAmount().compareTo(captured.getAmount()) != 0) {
+                                return new VNPayIPNResponse("04", "Invalid amount");
+                        }
 
-            order.setStatus(OrderStatus.COMPLETED);
-            order.setPaidAt(LocalDateTime.now());
-            orderRepository.save(order);
+                        completePayment(payment, captured);
 
-            checkoutService.updateCheckoutState(order.getCheckout().getId(), CheckoutState.COMPLETED);
+                        return new VNPayIPNResponse("00", "Confirm Success");
 
-            User user = order.getUser();
-
-            for (OrderItem item : order.getOrderItems()) {
-                Course course = courseRepository.findById(item.getCourseId())
-                        .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
-
-                courseAccessService.grantAccess(course.getId(), user.getId(), AccessType.PURCHASED);
-
-                enrollmentService.ensureEnrollment(user, course);
-
-            }
-
-            // Xóa cart items sau khi payment thành công
-            cartService.clearCartAfterPayment(user.getId(), order.getOrderItems());
-
-            notifyPaymentResult(user.getId(),
-                    new PaymentResultEvent(
-                            payment.getTransactionId(),
-                            "SUCCESS"
-                    )
-            );
-
-
-            NotificationEvent event = NotificationEvent.builder()
-                    .recipientId(user.getId())
-                    .title("Thanh toán thành công")
-                    .content("Bạn đã mua khóa học thành công")
-                    .type(NotificationType.ORDER_CONFIRMED)
-                    .createdAt(LocalDateTime.now())
-                    .build();
-
-            kafkaTemplate.send("notification-events", user.getId(), event);
+                } catch (Exception e) {
+                        log.error("IPN Error: ", e);
+                        return new VNPayIPNResponse("99", "Unknown error");
+                }
         }
 
-        else{
-            order.setStatus(OrderStatus.CANCELLED);
-            orderRepository.save(order);
+        private void completePayment(Payment payment, CapturedPayment captured) {
+                payment.setStatus(captured.getPaymentStatus());
+                payment.setGatewayTransactionId(captured.getGatewayTransactionId());
+                payment.setGatewayRawResponse(captured.getRawResponse());
+                paymentRepository.save(payment);
 
-            checkoutService.updateCheckoutState(order.getCheckout().getId(), CheckoutState.PAYMENT_FAILED);
+                Order order = payment.getOrder();
 
-            User user = order.getUser();
+                if (captured.getPaymentStatus().equals(PaymentStatus.COMPLETED)) {
 
-            notifyPaymentResult(user.getId(),
-                    new PaymentResultEvent(
-                            payment.getTransactionId(),
-                            "FAILED"
-                    )
-            );
+                        order.setStatus(OrderStatus.COMPLETED);
+                        order.setPaidAt(LocalDateTime.now());
+                        orderRepository.save(order);
+
+                        checkoutService.updateCheckoutState(order.getCheckout().getId(), CheckoutState.COMPLETED);
+
+                        User user = order.getUser();
+
+                        // === CORE OPERATIONS: grantAccess + ensureEnrollment ===
+                        // Các thao tác này PHẢI thành công. Nếu fail (trừ duplicate) → exception sẽ
+                        // propagate lên, transaction rollback, VNPay sẽ retry callback.
+                        for (OrderItem item : order.getOrderItems()) {
+                                Course course = courseRepository.findById(item.getCourseId())
+                                                .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+                                try {
+                                        courseAccessService.grantAccess(course.getId(), user.getId(),
+                                                        AccessType.PURCHASED);
+                                        enrollmentService.ensureEnrollment(user, course);
+                                } catch (org.springframework.dao.DataIntegrityViolationException e) {
+                                        // Race condition: concurrent callback đã tạo record trước → bỏ qua (idempotent)
+                                        log.warn("Duplicate access/enrollment detected (idempotent) for user {} course {}: {}",
+                                                        user.getId(), course.getId(), e.getMessage());
+                                }
+                        }
+
+                        // === SIDE EFFECTS: notification, cart cleanup ===
+                        // Cho phép fail mà không ảnh hưởng payment flow
+                        try {
+                                // Xóa cart items sau khi payment thành công
+                                cartService.clearCartAfterPayment(user.getId(), order.getOrderItems());
+
+                                notifyPaymentResult(user.getId(),
+                                                new PaymentResultEvent(
+                                                                payment.getTransactionId(),
+                                                                "SUCCESS"));
+
+                                NotificationEvent event = NotificationEvent.builder()
+                                                .recipientId(user.getId())
+                                                .title("Thanh toán thành công")
+                                                .content("Bạn đã mua khóa học thành công")
+                                                .type(NotificationType.ORDER_CONFIRMED)
+                                                .createdAt(LocalDateTime.now())
+                                                .build();
+
+                                kafkaTemplate.send("notification-events", user.getId(), event);
+                        } catch (Exception e) {
+                                log.error("Hệ thống phụ (Notify/Cart) gặp lỗi cho đơn hàng {}: {}",
+                                                order.getOrderCode(),
+                                                e.getMessage());
+                        }
+                } else {
+                        order.setStatus(OrderStatus.CANCELLED);
+                        orderRepository.save(order);
+                        checkoutService.updateCheckoutState(order.getCheckout().getId(), CheckoutState.PAYMENT_FAILED);
+                        User user = order.getUser();
+
+                        notifyPaymentResult(user.getId(),
+                                        new PaymentResultEvent(
+                                                        payment.getTransactionId(),
+                                                        "FAILED"));
+                }
         }
-    }
-    public void notifyPaymentResult(String userId, PaymentResultEvent event) {
-        messagingTemplate.convertAndSend(
-                "/topic/payment/" + userId,
-                event
-        );
-    }
 
-    
-@Transactional(readOnly = true)
-@PreAuthorize("isAuthenticated()")
-public PaymentResponse getPaymentStatus(String paymentId) {
-    String userId = SecurityUtils.getCurrentUserId()
-            .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-    
-    Payment payment = paymentRepository.findByTransactionId(paymentId)
-            .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
-    
-    // Kiểm tra payment có phải của user không
-    if (!payment.getOrder().getUser().getId().equals(userId)) {
-        throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
-    }
-    
-    return PaymentResponse.builder()
-            .paymentId(payment.getTransactionId())
-            .status(payment.getStatus())
-            .amount(payment.getAmount())
-            .orderCode(payment.getOrder().getOrderCode())
-            .createdAt(payment.getCreatedAt())
-            .build();
-}
+        public void notifyPaymentResult(String userId, PaymentResultEvent event) {
+                messagingTemplate.convertAndSend(
+                                "/topic/payment/" + userId,
+                                event);
+        }
 
-@Transactional(readOnly = true)
-@PreAuthorize("isAuthenticated()")
-public PageResponse<?> getPaymentHistory(Pageable pageable) {
-    String userId = SecurityUtils.getCurrentUserId()
-            .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-    
-    Page<Payment> payments = paymentRepository.findByOrderUserIdOrderByCreatedAtDesc(userId, pageable);
-    
-    List<PaymentResponse> responses = payments.stream()
-            .map(payment -> PaymentResponse.builder()
-                    .id(payment.getTransactionId())
-                    .amount(payment.getAmount())
-                    .status(payment.getStatus())
-                    .paymentMethod(payment.getPaymentMethod())
-                    .orderCode(payment.getOrder().getOrderCode())
-                    .createdAt(payment.getCreatedAt())
-                    .build())
-            .toList();
-    
-    return PageResponse.builder()
-            .pageNo(pageable.getPageNumber())
-            .pageSize(pageable.getPageSize())
-            .totalPage(payments.getTotalPages())
-            .items(responses)
-            .build();
-}
+        @Transactional(readOnly = true)
+        @PreAuthorize("isAuthenticated()")
+        public PaymentResponse getPaymentStatus(String paymentId) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
+                Payment payment = paymentRepository.findByTransactionId(paymentId)
+                                .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
 
+                // Kiểm tra payment có phải của user không
+                if (!payment.getOrder().getUser().getId().equals(userId)) {
+                        throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
+                }
 
+                return PaymentResponse.builder()
+                                .paymentId(payment.getTransactionId())
+                                .status(payment.getStatus())
+                                .amount(payment.getAmount())
+                                .orderCode(payment.getOrder().getOrderCode())
+                                .createdAt(payment.getCreatedAt())
+                                .build();
+        }
 
-//    public void cancelEnrollment(String enrollmentId) {
-//        String userId = SecurityUtils.getCurrentUserId()
-//                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-//
-//        User user = userRepository.findById(userId)
-//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-//
-//        Enrollment enrollment = enrollmentRepository.findById(enrollmentId)
-//                .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_EXIST));
-//
-//        if (enrollment.getStatus() == EnrollmentStatus.COMPLETED) {
-//            throw new AppException(ErrorCode.ENROLLMENT_ALREADY_COMPLETED);
-//        }
-//
-//        if(!enrollment.getUser().getId().equals(user.getId())){
-//            throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
-//        }
-//
-//        enrollment.setStatus(EnrollmentStatus.CANCELLED);
-//
-//        Payment payment = enrollment.getPayment();
-//        if (payment != null) {
-//            payment.setStatus(PaymentStatus.FAILED);
-//            paymentRepository.save(payment);
-//        }
-//
-//        enrollmentRepository.save(enrollment);
-//    }
+        @Transactional(readOnly = true)
+        @PreAuthorize("isAuthenticated()")
+        public PageResponse<?> getPaymentHistory(Pageable pageable) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
+                Page<Payment> payments = paymentRepository.findByOrderUserIdOrderByCreatedAtDesc(userId, pageable);
+
+                List<PaymentResponse> responses = payments.stream()
+                                .map(payment -> PaymentResponse.builder()
+                                                .id(payment.getTransactionId())
+                                                .amount(payment.getAmount())
+                                                .status(payment.getStatus())
+                                                .paymentMethod(payment.getPaymentMethod())
+                                                .orderCode(payment.getOrder().getOrderCode())
+                                                .createdAt(payment.getCreatedAt())
+                                                .build())
+                                .toList();
+
+                return PageResponse.builder()
+                                .pageNo(pageable.getPageNumber())
+                                .pageSize(pageable.getPageSize())
+                                .totalPage(payments.getTotalPages())
+                                .items(responses)
+                                .build();
+        }
 }

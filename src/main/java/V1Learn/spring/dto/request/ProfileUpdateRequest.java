@@ -2,6 +2,7 @@ package V1Learn.spring.dto.request;
 
 import V1Learn.spring.enums.Gender;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import jakarta.persistence.Column;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -18,4 +19,7 @@ public class ProfileUpdateRequest {
     String phone;
     String address;
     LocalDate dob;
+    // media
+    String avatarUrl;
+    String avatarPublicId;
 }

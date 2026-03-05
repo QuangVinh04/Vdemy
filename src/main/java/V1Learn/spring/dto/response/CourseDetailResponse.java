@@ -28,7 +28,8 @@ public class CourseDetailResponse {
     String thumbnailUrl;
     String videoUrl;
     CourseStatus status;
-    String category;
+    String categoryId;
+    String categoryName;
     InstructorInfo instructor;
     CourseStats stats;
     List<ChapterResponse> chapters;

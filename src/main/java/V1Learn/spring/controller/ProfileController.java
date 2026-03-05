@@ -41,14 +41,6 @@ public class ProfileController {
                 .build();
     }
 
-    @PostMapping("/me/avatar")
-    APIResponse<String> uploadAvatar(@RequestParam MultipartFile file) {
-        return APIResponse.<String>builder()
-                .message("Profile upload avatar successfully")
-                .result(profileService.uploadAvatar(file))
-                .build();
-    }
-
     @GetMapping("/me/avatar")
     APIResponse<String> getAvatar() {
         return APIResponse.<String>builder()

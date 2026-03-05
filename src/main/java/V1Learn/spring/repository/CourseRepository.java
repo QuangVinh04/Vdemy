@@ -21,14 +21,21 @@ import java.util.Set;
 @Repository
 public interface CourseRepository extends JpaRepository<Course, String>, JpaSpecificationExecutor<Course> {
 
-    @Query("SELECT DISTINCT c FROM Course c " +
-            "LEFT JOIN FETCH c.instructor i " +
+    @Query("SELECT c FROM Course c " +
+            "JOIN FETCH c.instructor i " +
             "WHERE c.id = :courseId" )
-    Optional<Course> findCourseBasicInfo(@Param("courseId") String courseId);
+    Optional<Course> findByIdWithInstructor(@Param("courseId") String courseId);
+
+    @Query("SELECT c FROM Course c " +
+            "JOIN FETCH c.instructor i " +
+            "JOIN FETCH c.category g " +
+            "WHERE c.id = :courseId" )
+    Optional<Course> findBasicInfoById(@Param("courseId") String courseId);
 
     // Lấy nhiều course cùng lúc bằng list ID
     @Query("SELECT c FROM Course c " +
-            "LEFT JOIN FETCH c.instructor i " +
+            "JOIN FETCH c.instructor i " +
+            "JOIN FETCH c.category g " +
             "WHERE c.id IN :courseIds")
     List<Course> findBasicInfoByIds(@Param("courseIds") Set<String> courseIds);
 

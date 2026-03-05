@@ -1,6 +1,5 @@
 package V1Learn.spring.entity;
 
-
 import V1Learn.spring.enums.PaymentMethod;
 import V1Learn.spring.enums.PaymentStatus;
 import jakarta.persistence.*;
@@ -9,7 +8,6 @@ import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
 
 @Getter
 @Setter
@@ -26,12 +24,13 @@ public class Payment extends AbstractEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     BigDecimal amount;
 
-    @Column(nullable = false)
+    @Builder.Default
+    @Column(name = "currency", nullable = false)
     String currency = "VND";
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false)
-    PaymentMethod paymentMethod;  // vnpay/paypal
+    PaymentMethod paymentMethod; // vnpay/paypal
 
     @Column(name = "gateway_transaction_id")
     String gatewayTransactionId;
@@ -51,6 +50,7 @@ public class Payment extends AbstractEntity {
     @Column(name = "expired_at")
     LocalDateTime expiredAt;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     PaymentStatus status = PaymentStatus.PENDING;
@@ -58,6 +58,9 @@ public class Payment extends AbstractEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
     Order order;
+
+    @Column(name = "idempotency_key", unique = true)
+    String idempotencyKey;
 
     @PrePersist
     protected void onCreate() {
@@ -72,4 +75,3 @@ public class Payment extends AbstractEntity {
         this.expiredAt = now.plusMinutes(30);
     }
 }
-

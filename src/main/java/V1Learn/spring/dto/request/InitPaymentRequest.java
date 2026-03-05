@@ -20,4 +20,6 @@ public class InitPaymentRequest {
     @NotNull(message = "Payment method is required")
     String paymentMethod;
 
+    String idempotencyKey;
+
 }

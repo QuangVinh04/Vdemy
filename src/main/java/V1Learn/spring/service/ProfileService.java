@@ -24,66 +24,42 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 public class ProfileService {
 
-    UserRepository userRepository;
-    ProfileMapper profileMapper;
-    CloudinaryService cloudinaryService;
+        UserRepository userRepository;
+        ProfileMapper profileMapper;
+        CloudinaryService cloudinaryService;
 
-    @Transactional
-    @PreAuthorize("isAuthenticated()")
-    public void updateProfile(ProfileUpdateRequest request) {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+        @Transactional
+        @PreAuthorize("isAuthenticated()")
+        public void updateProfile(ProfileUpdateRequest request) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        profileMapper.updateUserProfile(user, request);
+                profileMapper.updateUserProfile(user, request);
 
-        userRepository.save(user);
-        log.info("User profile updated successfully for user with email: {}", user.getEmail());
-    }
+                userRepository.save(user);
+                log.info("User profile updated successfully for user with email: {}", user.getEmail());
+        }
 
+        @PreAuthorize("isAuthenticated()")
+        public ProfileResponse getInfoProfile() {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
-    @PreAuthorize("isAuthenticated()")
-    public ProfileResponse getInfoProfile() {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+                return profileMapper.toProfileResponse(userRepository.findById(userId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));
+        }
 
-        return profileMapper.toProfileResponse(userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND)));
-    }
+        @PreAuthorize("isAuthenticated()")
+        public String getAvatar() {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
-    @Transactional
-    @PreAuthorize("isAuthenticated()")
-    public String uploadAvatar(MultipartFile file) {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        String avatarUrl = null;
-        // kiểm tra avatar cũ của User có tồn tại ko
-//        if(user.getAvatar() != null){
-//            cloudinaryService.deleteFile(cloudinaryService.extractPublicIdFromUrl(user.getAvatar()), "image");
-//            user.setAvatar(null);
-//        }
-//        if(file != null){
-//            avatarUrl = cloudinaryService.uploadUserAvatar(file);
-//            user.setAvatar(avatarUrl);
-//            userRepository.save(user);
-//        }
-        return avatarUrl;
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    public String getAvatar() {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        return user.getAvatar();
-    }
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                return user.getAvatarUrl();
+        }
 
 }
-

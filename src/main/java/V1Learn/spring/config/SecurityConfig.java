@@ -1,10 +1,11 @@
 package V1Learn.spring.config;
 
-import V1Learn.spring.service.UserDetailServiceCustomizer;
+import V1Learn.spring.security.CustomUserDetailsService;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -24,19 +25,22 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.Arrays;
 
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private static final String[] PUBLIC_ENDPOINTS = {"/api/v1/auth/login",  // <-- Bổ sung prefix chính xác
-            "/auth/v1/token",
-            "/auth/v1/introspect",
-            "/auth/v1/logout",
-            "/auth/v1/refresh",
-            "/api/v1/**",
-            "/api/v1/courses/*",
+    private static final String[] PUBLIC_ENDPOINTS = {
+            "/api/v1/auth/**",
+
+            "/api/v1/user/register",
+            "/api/v1/user/confirm",
+            "/api/v1/user/send-otp-forgot-password",
+            "/api/v1/user/verify-otp",
+            "/api/v1/user/reset-password",
+            "/api/v1/user/check-exists-user",
+
+            "/api/v1/course/*",
             "/api/v1/check-enrolled/{courseId}",
             "/api/v1/review/course-review/*",
 
@@ -44,34 +48,34 @@ public class SecurityConfig {
     };
 
     private final CustomJwtDecoder customJwtDecoder;
-    private final UserDetailServiceCustomizer userDetailServiceCustomizer;
+    private final CustomUserDetailsService customUserDetailsService;
 
-    public SecurityConfig(CustomJwtDecoder customJwtDecoder, UserDetailServiceCustomizer userDetailServiceCustomizer) {
+    public SecurityConfig(CustomJwtDecoder customJwtDecoder, CustomUserDetailsService customUserDetailsService) {
         this.customJwtDecoder = customJwtDecoder;
-        this.userDetailServiceCustomizer = userDetailServiceCustomizer;
+        this.customUserDetailsService = customUserDetailsService;
     }
-
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // Bộ lọc ủy quyền
-        http.authorizeHttpRequests(requests ->
-                requests.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
-                        .anyRequest()
-                        .authenticated());
-        //authorizeHttpRequests nếu bạn muốn bảo vệ API theo đường dẫn URL.
-        //@PreAuthorize nếu bạn cần kiểm soát truy cập ở mức logic nghiệp vụ.
-        //cả hai khi cần bảo vệ cả HTTP request lẫn dữ liệu cụ thể.
+        http.authorizeHttpRequests(requests -> requests.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/v1/category/**").permitAll()
+                .requestMatchers("/api/v1/admin/**").hasAuthority("ADMIN")
+                .anyRequest()
+                .authenticated());
+        // authorizeHttpRequests nếu bạn muốn bảo vệ API theo đường dẫn URL.
+        // @PreAuthorize nếu bạn cần kiểm soát truy cập ở mức logic nghiệp vụ.
+        // cả hai khi cần bảo vệ cả HTTP request lẫn dữ liệu cụ thể.
 
-        http.oauth2ResourceServer(oauth2 ->
-                oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(customJwtDecoder)
-                                .jwtAuthenticationConverter(jwtConverter()))
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+        http.oauth2ResourceServer(oauth2 -> oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(customJwtDecoder)
+                .jwtAuthenticationConverter(jwtConverter()))
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
 
         );
-        //Dòng code này giúp tắt bảo vệ CSRF, phù hợp khi làm REST API hoặc khi không cần bảo vệ chống CSRF.
-        // Nhưng nếu ứng dụng có sử dụng session hoặc form login, hãy cân nhắc trước khi tắt nó.
+        // Dòng code này giúp tắt bảo vệ CSRF, phù hợp khi làm REST API hoặc khi không
+        // cần bảo vệ chống CSRF.
+        // Nhưng nếu ứng dụng có sử dụng session hoặc form login, hãy cân nhắc trước khi
+        // tắt nó.
         http.csrf(AbstractHttpConfigurer::disable);
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         return http.build();
@@ -92,14 +96,15 @@ public class SecurityConfig {
         return source;
     }
 
-
     /*
-    Chuyển đổi quyền hạn (authorities) từ JWT thành đối tượng Authentication trong Spring Security.
-    Loại bỏ tiền tố mặc định "SCOPE_" của quyền trong JWT.
+     * Chuyển đổi quyền hạn (authorities) từ JWT thành đối tượng Authentication
+     * trong Spring Security.
+     * Loại bỏ tiền tố mặc định "SCOPE_" của quyền trong JWT.
      */
     @Bean
     JwtAuthenticationConverter jwtConverter() {
-        // chuyển đổi claim "authorities" hoặc "scope" trong JWT thành GrantedAuthority của Spring Security.
+        // chuyển đổi claim "authorities" hoặc "scope" trong JWT thành GrantedAuthority
+        // của Spring Security.
         JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
@@ -115,26 +120,22 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailServiceCustomizer);
+        authProvider.setUserDetailsService(customUserDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return webSecurity ->
-                webSecurity.ignoring()
-                        .requestMatchers(
-                                "/actuator/**",
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/swagger-ui/index.html",
-                                "/webjars/**"
-                        );
+        return webSecurity -> webSecurity.ignoring()
+                .requestMatchers(
+                        "/actuator/**",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/swagger-ui/index.html",
+                        "/webjars/**");
     }
-
-
 
     @Bean
     PasswordEncoder passwordEncoder() {

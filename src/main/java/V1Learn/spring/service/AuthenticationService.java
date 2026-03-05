@@ -12,6 +12,7 @@ import V1Learn.spring.repository.RoleRepository;
 import V1Learn.spring.repository.UserRepository;
 import V1Learn.spring.repository.httpclient.OutboundIdentityClient;
 import V1Learn.spring.repository.httpclient.OutboundUserClient;
+import V1Learn.spring.security.CustomUserDetails;
 import V1Learn.spring.constant.PredefinedRole;
 import com.nimbusds.jose.*;
 import com.nimbusds.jwt.SignedJWT;
@@ -35,7 +36,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
 
 /**
  * Service quản lý xác thực của người dùng
@@ -68,8 +68,6 @@ public class AuthenticationService {
     @NonFinal
     protected final String GRANT_TYPE = "authorization_code";
 
-
-
     public IntrospectResponse introspect(String token) throws JOSEException, ParseException {
 
         boolean isValid = true;
@@ -82,8 +80,7 @@ public class AuthenticationService {
                 roles = Arrays.stream(scopeString.split(" "))
                         .collect(Collectors.toSet());
             }
-        }
-        catch (AppException e) {
+        } catch (AppException e) {
             isValid = false;
 
         }
@@ -94,8 +91,8 @@ public class AuthenticationService {
                 .build();
     }
 
-
-    public AuthenticationResponse outboundAuthenticate(String code, HttpServletResponse httpResponse) throws ParseException {
+    public AuthenticationResponse outboundAuthenticate(String code, HttpServletResponse httpResponse)
+            throws ParseException {
         var response = outboundIdentityClient.exchangeToken(ExchangeTokenRequest.builder()
                 .code(code)
                 .clientId(CLIENT_ID)
@@ -113,7 +110,7 @@ public class AuthenticationService {
 
         Set<Role> roles = new HashSet<>();
         Role roleUser = roleRepository.findByName(PredefinedRole.USER_ROLE)
-                        .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTS));
+                .orElseThrow(() -> new AppException(ErrorCode.ROLE_NOT_EXISTS));
         roles.add(roleUser);
 
         User user = userRepository.findByEmail(userInfo.getEmail()).orElse(null);
@@ -156,16 +153,15 @@ public class AuthenticationService {
                 .build();
     }
 
-
-
-
-    public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response) throws ParseException {
+    public AuthenticationResponse authenticate(AuthenticationRequest request, HttpServletResponse response)
+            throws ParseException {
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-        User user = (User) authentication.getPrincipal();
-        user.getAuthorities().forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        User user = userDetails.getUser();
+        userDetails.getAuthorities().forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
 
         log.info("User logged in successfully. userId={}, email={}, roles={}",
                 user.getId(),
@@ -192,7 +188,6 @@ public class AuthenticationService {
                 .build();
     }
 
-
     public void logout(LogoutRequest request, HttpServletResponse response) throws ParseException, JOSEException {
         try {
             var signedToken = jwtService.verifyToken(request.getAccessToken());
@@ -202,21 +197,21 @@ public class AuthenticationService {
             String refreshKey = "refresh:" + signedToken.getJWTClaimsSet().getSubject();
 
             // Đánh dấu Access Token là blacklist + jit
-            redisService.setWithTTL("blacklist:" + jit, request.getAccessToken(), expiryTime.getTime(), TimeUnit.MILLISECONDS);
+            redisService.setWithTTL("blacklist:" + jit, request.getAccessToken(), expiryTime.getTime(),
+                    TimeUnit.MILLISECONDS);
             // Xóa RefreshToken trong Redis
             redisService.deleteValue(refreshKey);
             // xóa khỏi cookie
             deleteRefreshTokenCookie(response);
-        } catch (AppException exception){
+        } catch (AppException exception) {
             log.info("Token already expired");
         }
     }
 
-
-
-    public RefreshTokenResponse refreshToken(String refreshToken, String accessToken) throws ParseException, JOSEException {
+    public RefreshTokenResponse refreshToken(String refreshToken, String accessToken)
+            throws ParseException, JOSEException {
         // kiểm tra refreshToken lưu trong redis
-        var signedJWT =  jwtService.verifyToken(refreshToken);
+        var signedJWT = jwtService.verifyToken(refreshToken);
         String refreshKey = "refresh:" + signedJWT.getJWTClaimsSet().getSubject();
         String storedRefreshToken = redisService.getValue(refreshKey).toString();
 
@@ -226,7 +221,7 @@ public class AuthenticationService {
             throw new AppException(ErrorCode.AUTH_UNAUTHORIZED);
         }
         // Thêm accessToken vào blacklist
-        if(accessToken != null) {
+        if (accessToken != null) {
             SignedJWT jwt = SignedJWT.parse(accessToken);
             var jwtTid = jwt.getJWTClaimsSet().getJWTID();
             long accessTokenExp = jwt.getJWTClaimsSet().getExpirationTime().getTime();
@@ -235,8 +230,7 @@ public class AuthenticationService {
 
         String email = signedJWT.getJWTClaimsSet().getSubject();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED)
-        );
+                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
         // tạo access token mới
         var newAccessToken = jwtService.generateAccessToken(user);
 
@@ -246,8 +240,6 @@ public class AuthenticationService {
                 .build();
     }
 
-
-
     private void deleteRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", "");
         cookie.setHttpOnly(true);
@@ -256,7 +248,6 @@ public class AuthenticationService {
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
-
 
     private void addRefreshToCookie(String refreshToken, HttpServletResponse response) {
         Cookie cookie = new Cookie("refreshToken", refreshToken);
@@ -269,4 +260,3 @@ public class AuthenticationService {
     }
 
 }
-
