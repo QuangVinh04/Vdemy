@@ -17,6 +17,8 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -40,6 +42,7 @@ public class CourseService {
     CourseMapper courseMapper;
     EnrollmentRepository enrollmentRepository;
     CategoryRepository categoryRepository;
+    CourseCacheService courseCacheService;
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER') and isAuthenticated()")
@@ -72,6 +75,7 @@ public class CourseService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER') and isAuthenticated()")
+    @CacheEvict(value = "published_courses_page", allEntries = true)
     public CourseResponse updateCourse(String courseId,
                                        CourseUpdateRequest request) {
 
@@ -81,13 +85,16 @@ public class CourseService {
                         .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
         course.setCategory(category);
         category.getCourses().add(course);
-
         courseRepository.save(course);
+
+        courseCacheService.evictAllCourseRelatedCache(courseId);
+
         return courseMapper.toCourseResponse(course);
     }
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
+    @CacheEvict(value = "published_courses_page", allEntries = true)
     public void publish(String courseId)  {
         log.info("Service: Publish Course for courseId={}", courseId);
 
@@ -100,6 +107,9 @@ public class CourseService {
         }
         course.setStatus(CourseStatus.PUBLISHED);
         courseMapper.toCourseResponse(courseRepository.save(course));
+
+        courseCacheService.evictAllCourseRelatedCache(courseId);
+        courseCacheService.evictPublishedListCache();
     }
 
 
@@ -108,6 +118,9 @@ public class CourseService {
     public void deleteCourse(String courseId) {
         log.info("Service: delete Course");
         courseRepository.deleteById(courseId);
+
+        courseCacheService.evictAllCourseRelatedCache(courseId);
+        courseCacheService.evictPublishedListCache();
     }
 
 
@@ -121,6 +134,8 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "published_courses_page",
+            key = "#pageable.pageNumber + '-' + #pageable.pageSize + '-' + #pageable.sort.toString()")
     public PageResponse getAllCourses(Pageable pageable) {
         log.info("Get all course in status publish");
         Page<Course> courses = courseRepository.findByStatus(pageable, CourseStatus.PUBLISHED);
@@ -153,7 +168,7 @@ public class CourseService {
         List<CourseTeacherResponse> responses = courses.stream().map(c -> {
                     CourseTeacherResponse response = courseMapper.toCourseTeacherResponse(c);
                     response.setInstructorName(c.getInstructor().getFullName());
-                    response.setInstructorAvatar(c.getInstructor().getAvatar());
+                    response.setInstructorAvatar(c.getInstructor().getAvatarUrl());
                     response.setUserEnrolled(enrollmentRepository.countByCourseId(c.getId(), EnrollmentStatus.COMPLETED));
                     return response;
                 })
@@ -208,7 +223,7 @@ public class CourseService {
         List<CourseResponse> responses = courses.stream().map(c -> {
                     CourseResponse response = courseMapper.toCourseResponse(c);
                     response.setInstructorName(c.getInstructor().getFullName());
-                    response.setInstructorAvatar(c.getInstructor().getAvatar());
+                    response.setInstructorAvatar(c.getInstructor().getAvatarUrl());
                     return response;
                 })
                 .toList();

@@ -11,6 +11,7 @@ import V1Learn.spring.repository.LessonRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -75,5 +77,20 @@ public class CourseCacheService {
     })
     public void evictCourseContentCache(String courseId) {
         // Cache eviction handled by annotations
+    }
+
+    @Caching(evict = {
+            @CacheEvict(value = "course_detail", key = "#courseId"),
+            @CacheEvict(value = "course_chapter", key = "#courseId"),
+            @CacheEvict(value = "course_lesson", key = "#courseId"),
+            @CacheEvict(value = "course_stats", key = "#courseId")
+    })
+    public void evictAllCourseRelatedCache(String courseId) {
+        log.info("Cleared all related cache for course: {}", courseId);
+    }
+
+    @CacheEvict(value = "published_courses_page", allEntries = true)
+    public void evictPublishedListCache() {
+        log.info("Cleared all published lists cache");
     }
 }
