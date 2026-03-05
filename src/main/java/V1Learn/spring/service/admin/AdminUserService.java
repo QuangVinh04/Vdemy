@@ -150,7 +150,7 @@ public class AdminUserService {
                     .email(user.getEmail())
                     .phone(user.getPhone())
                     .gender(user.getGender() != null ? user.getGender().toString() : null) // Kiểm tra null
-                    .avatar(user.getAvatar())
+                    .avatar(user.getAvatarUrl())
                     .dob(user.getDob()) // Giữ nguyên LocalDate
                     .description(registerTeacher.getDescription())
                     .expertise(registerTeacher.getExpertise())
@@ -167,7 +167,7 @@ public class AdminUserService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .gender(user.getGender() != null ? user.getGender().toString() : null) // Kiểm tra null
-                .avatar(user.getAvatar())
+                .avatar(user.getAvatarUrl())
                 .dob(user.getDob()) // Giữ nguyên LocalDate
                 .description("")
                 .expertise("")
