@@ -171,14 +171,17 @@ public class AuthenticationService {
         var accessToken = jwtService.generateAccessToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
 
-        // lấy thông tin của refresh token sau khi tạo ra
-        SignedJWT signedTokenRefresh = SignedJWT.parse(refreshToken);
-        Date expiryTime = signedTokenRefresh.getJWTClaimsSet().getExpirationTime();
+        // 4. Xử lý Redis (Nên bọc try-catch nếu không muốn app sập khi Redis lỗi)
+        try {
+            SignedJWT signedTokenRefresh = SignedJWT.parse(refreshToken);
+            Date expiryTime = signedTokenRefresh.getJWTClaimsSet().getExpirationTime();
+            redisService.setUntil("refresh:" + user.getId(), refreshToken, expiryTime.getTime());
+            log.info("Refresh token stored in Redis for userId={}, expiry={}", user.getId(), expiryTime);
+        } catch (Exception e) {
+            log.error("Lỗi lưu Redis: {}", e.getMessage());
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
 
-        // Lưu refresh token vào Redis có key là refresh + userId;
-        redisService.setUntil("refresh:" + user.getId(), refreshToken, expiryTime.getTime());
-
-        log.info("Refresh token stored in Redis for userId={}, expiry={}", user.getId(), expiryTime);
         addRefreshToCookie(refreshToken, response);
         log.info("Login with email and password successful");
         return AuthenticationResponse.builder()
