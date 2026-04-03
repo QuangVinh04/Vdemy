@@ -1,6 +1,7 @@
 package V1Learn.spring.dto.response;
 
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -15,7 +16,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class PaymentResponse {
+public class PaymentResponse  {
     String id;
     String orderCode;
     String message;

@@ -21,14 +21,6 @@ import org.springframework.web.bind.annotation.*;
 public class EnrollmentController {
     EnrollmentService enrollmentService;
 
-    // @GetMapping("/check-enrolled/{courseId}")
-    // APIResponse<CheckEnrolledResponse> checkEnrolled(@PathVariable String courseId) {
-    //     log.info("Controller: check enrolled");
-    //     return APIResponse.<CheckEnrolledResponse>builder()
-    //             .result(enrollmentService.checkEnrolled(courseId))
-    //             .build();
-    // }
-
     // Lấy tiến độ học 1 khóa
     @GetMapping("/{courseId}/progress")
     public APIResponse<?> getEnrollmentProgress(@PathVariable String courseId) {

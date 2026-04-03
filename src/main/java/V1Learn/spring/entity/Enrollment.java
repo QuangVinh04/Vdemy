@@ -39,7 +39,7 @@ public class Enrollment extends AbstractEntity {
     @JoinColumn(name = "course_id", nullable = false)
     Course course;
 
-    @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "enrollment", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     Set<LessonProgress> lessonProgresses;
 
     @Enumerated(EnumType.STRING)

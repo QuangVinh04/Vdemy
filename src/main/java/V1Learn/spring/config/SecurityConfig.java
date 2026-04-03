@@ -40,7 +40,7 @@ public class SecurityConfig {
             "/api/v1/user/reset-password",
             "/api/v1/user/check-exists-user",
 
-            "/api/v1/course/*",
+            "/api/v1/courses/*",
             "/api/v1/check-enrolled/{courseId}",
             "/api/v1/review/course-review/*",
 

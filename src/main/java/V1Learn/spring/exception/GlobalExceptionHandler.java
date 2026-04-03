@@ -7,6 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -79,11 +81,42 @@ public class GlobalExceptionHandler {
     ResponseEntity<ErrorResponse> handlingAccessDeniedException(AccessDeniedException e, HttpServletRequest request) {
         ErrorCode errorCode = ErrorCode.AUTH_UNAUTHORIZED;
 
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setStatus(errorCode.getCode());
-        errorResponse.setMessage(errorCode.getMessage());
-        errorResponse.setTimestamp(LocalDateTime.now());
-        errorResponse.setPath(request.getRequestURI());
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI()).build();
+
+        return ResponseEntity
+                .status(errorCode.getStatusCode())
+                .body(errorResponse);
+    }
+
+    // xử lý authentication
+    @ExceptionHandler(value = BadCredentialsException.class)
+    ResponseEntity<ErrorResponse> handlingBadCredentialsException(BadCredentialsException e, HttpServletRequest request) {
+        ErrorCode errorCode = ErrorCode.INVALID_CREDENTIALS;
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+        .status(errorCode.getCode())
+        .message(errorCode.getMessage())
+        .timestamp(LocalDateTime.now())
+        .path(request.getRequestURI()).build();
+
+        return ResponseEntity
+                .status(errorCode.getStatusCode())
+                .body(errorResponse);
+    }
+
+    @ExceptionHandler(value = AuthenticationException.class)
+    ResponseEntity<ErrorResponse> handlingBadCredentialsException(AuthenticationException e, HttpServletRequest request) {
+        ErrorCode errorCode = ErrorCode.AUTH_UNAUTHORIZED;
+
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .status(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .timestamp(LocalDateTime.now())
+                .path(request.getRequestURI()).build();
 
         return ResponseEntity
                 .status(errorCode.getStatusCode())

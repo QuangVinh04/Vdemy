@@ -33,12 +33,12 @@ public class CourseCacheService {
     CourseRepository courseRepository;
     EnrollmentRepository enrollmentRepository;
 
-    @Cacheable(value = "course_chapter", key = "#courseId")
+    @Cacheable(value = "course_chapter", key = "#courseId", sync = true)
     public List<ChapterSummaryProjection> loadChapterSummaries(String courseId) {
         return chapterRepository.findChapterSummariesByCourseId(courseId);
     }
 
-    @Cacheable(value = "course_lesson", key = "#courseId")
+    @Cacheable(value = "course_lesson", key = "#courseId", sync = true)
     public Map<String, List<LessonSummaryProjection>> loadLessons(String courseId) {
         List<LessonSummaryProjection> lessons = lessonRepository.findLessonsByCourseId(courseId);
         if (lessons.isEmpty())
@@ -50,13 +50,13 @@ public class CourseCacheService {
                         Collectors.toList()));
     }
 
-    @Cacheable(value = "course_stats", key = "#courseId")
+    @Cacheable(value = "course_stats", key = "#courseId", sync = true)
     public CourseStatsProjection loadCourseStats(String courseId) {
         return courseRepository.getCourseStats(courseId)
                 .orElse(new CourseStatsProjection(0L, 0.0, 0L));
     }
 
-    @Cacheable(value = "course_instructor", key = "#instructorId")
+    @Cacheable(value = "course_instructor", key = "#instructorId", sync = true)
     public InstructorInfo loadInstructorInfo(String instructorId, String fullName, String avatar) {
         return InstructorInfo.builder()
                 .id(instructorId)

@@ -14,7 +14,7 @@ import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
-import org.springframework.security.access.AccessDeniedException;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
@@ -57,21 +57,20 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
 
                 if (accessor != null && StompCommand.CONNECT.equals(accessor.getCommand())) {
-                    String authHeader = accessor.getFirstNativeHeader("Authorization");
+                    // Thử lấy token từ nhiều nguồn
+                    String token = extractToken(accessor);
 
-                    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                        throw new AccessDeniedException("Missing Token");
+                    if (token == null || token.isBlank()) {
+                        // Cho phép kết nối anonymous (user chưa đăng nhập)
+                        log.info("WebSocket connection without token - anonymous user");
+                        return message;
                     }
 
-                    String token = authHeader.substring(7);
-
                     try {
-                        // Tận dụng hàm verifyToken của bạn ở đây
                         SignedJWT signedJWT = jwtService.verifyToken(token);
 
                         String userId = signedJWT.getJWTClaimsSet().getSubject();
 
-                        // Trích xuất quyền (Authorities) từ signedJWT
                         var authorities = extractAuthorities(signedJWT);
 
                         Authentication auth = new PreAuthenticatedAuthenticationToken(
@@ -83,13 +82,42 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
                     } catch (Exception e) {
                         log.error("WebSocket auth failed: {}", e.getMessage());
-                        // Chuyển đổi mọi lỗi thành AccessDeniedException để ngắt kết nối
-                        throw new AccessDeniedException("Unauthorized");
+                        // Token không hợp lệ → vẫn cho kết nối anonymous thay vì ngắt
+                        log.warn("Allowing anonymous WebSocket connection due to invalid token");
                     }
                 }
                 return message;
             }
         });
+    }
+
+    /**
+     * Trích xuất JWT token từ STOMP headers
+     * Thử: Authorization header → login header
+     */
+    private String extractToken(StompHeaderAccessor accessor) {
+        // 1. Thử lấy từ header "Authorization"
+        String authHeader = accessor.getFirstNativeHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            log.debug("Token found in Authorization header");
+            return authHeader.substring(7);
+        }
+
+        // 2. Thử lấy từ header "login" (STOMP default)
+        String loginHeader = accessor.getFirstNativeHeader("login");
+        if (loginHeader != null && !loginHeader.isBlank()) {
+            log.debug("Token found in login header");
+            return loginHeader;
+        }
+
+        // 3. Thử lấy từ header "token" (custom)
+        String tokenHeader = accessor.getFirstNativeHeader("token");
+        if (tokenHeader != null && !tokenHeader.isBlank()) {
+            log.debug("Token found in token header");
+            return tokenHeader;
+        }
+
+        return null;
     }
 
     private List<SimpleGrantedAuthority> extractAuthorities(SignedJWT signedJWT) throws ParseException {

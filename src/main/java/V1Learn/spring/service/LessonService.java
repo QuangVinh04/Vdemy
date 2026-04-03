@@ -64,11 +64,12 @@ public class LessonService {
         return response;
     }
 
-    public LessonResponse buildLesson(LessonSummaryProjection lessonSummaries,
+    public LessonResponse buildLesson(
+            LessonSummaryProjection lessonSummaries,
             AccessDecision accessDecision,
-            Set<String> completedLessons) {
+            boolean isCompleted,
+            Integer lastWatchedAt) {
 
-        boolean isCompleted = completedLessons.contains(lessonSummaries.id());
         boolean isPreview = Boolean.TRUE.equals(lessonSummaries.isPreview());
         boolean canSeeMedia = accessDecision.isHasFullAccess() || isPreview;
 
@@ -77,6 +78,7 @@ public class LessonService {
             response.setFileUrl(lessonSummaries.fileUrl());
             response.setVideoUrl(lessonSummaries.videoUrl());
             response.setIsCompleted(isCompleted);
+            response.setLastWatchedAt(lastWatchedAt);
         }
         response.setIsLocked(!canSeeMedia);
         return response;

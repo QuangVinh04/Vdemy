@@ -33,7 +33,7 @@ public class CourseController {
 
 
 
-    @PostMapping(value = "/create-course")
+    @PostMapping(value = "/create")
     public APIResponse<CourseResponse> createCourse(
             @RequestBody @Valid CourseCreationRequest request) {
         log.info("Request creating new course");
@@ -46,7 +46,7 @@ public class CourseController {
 
 
 
-    @PutMapping(value = "/update-course/{courseId}")
+    @PutMapping(value = "/update/{courseId}")
     public APIResponse<CourseResponse> updateCourse(
             @PathVariable String courseId,
             @RequestBody @Valid CourseUpdateRequest request) {
@@ -56,7 +56,7 @@ public class CourseController {
                 .build();
     }
 
-    @PutMapping(value = "/publish-course/{courseId}")
+    @PutMapping(value = "/publish/{courseId}")
     public APIResponse<CourseResponse> publish(@PathVariable String courseId) {
         log.info("Request publish course with ID: {}", courseId);
         courseService.publish(courseId);
@@ -79,7 +79,7 @@ public class CourseController {
                 .build();
     }
 
-    @DeleteMapping("/delete-course/{courseId}")
+    @DeleteMapping("/delete/{courseId}")
     public APIResponse<String> deleteCourseById(@PathVariable String courseId) {
         log.info("Request deleting course with ID: {}", courseId);
         courseService.deleteCourse(courseId);

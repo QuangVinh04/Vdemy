@@ -15,6 +15,7 @@ public enum ErrorCode {
     INVALID_VERIFY_CODE(9006, "invalid verify code", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_EXISTED(9007, "notification not existed", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST(9008, "Invalid request", HttpStatus.BAD_REQUEST),
+    INTERNAL_SERVER_ERROR(9009, "Internal server error", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // Authentication & Authorization Errors
     AUTH_UNAUTHORIZED(1001, "Unauthorized", HttpStatus.UNAUTHORIZED),
@@ -22,6 +23,7 @@ public enum ErrorCode {
     AUTH_INVALID_TOKEN(1003, "Invalid token", HttpStatus.UNAUTHORIZED),
     AUTH_EXPIRED_TOKEN(1004, "Expired token", HttpStatus.UNAUTHORIZED),
     AUTH_ACCOUNT_LOCKED(1005, "Account locked", HttpStatus.UNAUTHORIZED),
+    INVALID_CREDENTIALS(1006, "Incorrect email/password", HttpStatus.UNAUTHORIZED),
 
     // User Errors
     USER_NOT_FOUND(2001, "User not found", HttpStatus.NOT_FOUND),
@@ -62,6 +64,8 @@ public enum ErrorCode {
     LESSON_NOT_FOUND(5001, "Lesson not found", HttpStatus.NOT_FOUND),
     LESSON_ALREADY_EXISTS(5002, "Lesson already exists", HttpStatus.BAD_REQUEST),
     ACCESS_DENIED(5003, "Access denied", HttpStatus.FORBIDDEN),
+    LESSON_PROGRESS_NOT_FOUND(5004, "Lesson progress not found", HttpStatus.NOT_FOUND),
+    LESSON_NOT_BELONG_TO_COURSE(5005, "Lesson does not belong to this course", HttpStatus.BAD_REQUEST),
 
     // Media
     MEDIA_NOT_FOUND(6001, "Media not found", HttpStatus.NOT_FOUND),

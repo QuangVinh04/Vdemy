@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 
+import java.io.Serializable;
 import java.util.List;
 
 
@@ -16,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class CourseResponse {
+public class CourseResponse implements Serializable {
     String id;
     String title;
     String description;

@@ -62,7 +62,11 @@ public interface CourseRepository extends JpaRepository<Course, String>, JpaSpec
 
     @Query("SELECT COUNT(c) FROM Course c " +
             "WHERE c.instructor.id = :id")
-    Integer countByInstructorId(@Param("id") String id);
+    long countByInstructorId(@Param("id") String id);
+
+    @Query("SELECT COUNT(l) FROM Lesson l " +
+            "WHERE l.chapter.course.id = :courseId")
+    long countLessonsByCourseId(@Param("courseId") String courseId);
 
     @Query("""
   SELECT new V1Learn.spring.projection.CourseStatsProjection(

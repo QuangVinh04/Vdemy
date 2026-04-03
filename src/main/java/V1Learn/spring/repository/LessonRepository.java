@@ -17,6 +17,15 @@ public interface LessonRepository extends JpaRepository<Lesson, String> {
 
   boolean existsByVideoPublicId(String publicId);
 
+  @Query("SELECT l.id FROM Lesson l " +
+      "WHERE l.chapter.course.id = :courseId " +
+      "AND (l.chapter.orderIndex > :currentChapterOrder " +
+      "     OR (l.chapter.orderIndex = :currentChapterOrder AND l.orderIndex > :currentLessonOrder)) " +
+      "ORDER BY l.chapter.orderIndex ASC, l.orderIndex ASC LIMIT 1")
+  Optional<String> findNextLessonId(@Param("courseId") String courseId,
+      @Param("currentChapterOrder") Integer currentChapterOrder,
+      @Param("currentLessonOrder") Integer currentLessonOrder);
+
   @Query("""
       SELECT new V1Learn.spring.projection.LessonSummaryProjection(
           l.id,

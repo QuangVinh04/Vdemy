@@ -24,4 +24,5 @@ public class LessonResponse {
     Boolean isCompleted;
     Boolean isPublished;
     Boolean isLocked;
+    Integer lastWatchedAt;
 }

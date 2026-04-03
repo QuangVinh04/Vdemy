@@ -76,7 +76,7 @@ public class CourseDetailService {
                 .completedFuture(Collections.emptyMap());
         CompletableFuture<CourseStatsProjection> statsFuture = CompletableFuture.completedFuture(null);
         CompletableFuture<InstructorInfo> instructorFuture = CompletableFuture.completedFuture(null);
-        CompletableFuture<Set<String>> progressFuture = CompletableFuture.completedFuture(Collections.emptySet());
+        CompletableFuture<UserCourseProgressResponse> progressFuture = CompletableFuture.completedFuture(null);
 
         // 2. Kích hoạt xử lý đa luồng (kết hợp lấy từ Cache)
         if (fields.contains(CHAPTERS) || fields.contains(LESSONS) || fields.contains(STATS)) {
@@ -122,11 +122,35 @@ public class CourseDetailService {
                 progressFuture.join());
     }
 
-    private Set<String> loadUserProgress(AccessDecision accessResult, String courseId, String userId) {
-        if (!accessResult.isHasFullAccess() || userId == null || userId.isEmpty()) {
-            return Collections.emptySet();
+    private UserCourseProgressResponse loadUserProgress(AccessDecision accessResult, String courseId, String userId) {
+        if (!accessResult.isHasFullAccess() || userId == null) {
+            return null;
         }
-        return lessonProgressRepository.findCompletedLessonIdsByUserAndCourse(userId, courseId);
+
+        // 1. Lấy thông tin tổng quát từ Enrollment
+        Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElse(null);
+        if (enrollment == null) return null;
+
+        // 2. Lấy danh sách chi tiết các bài học đã có tiến độ
+        List<LessonProgress> progresses = lessonProgressRepository.findByEnrollmentId(enrollment.getId());
+
+        Set<String> completedIds = progresses.stream()
+                .filter(LessonProgress::getIsCompleted)
+                .map(lp -> lp.getLesson().getId())
+                .collect(Collectors.toSet());
+
+        Map<String, Integer> history = progresses.stream()
+                .filter(lp -> !lp.getIsCompleted())
+                .collect(Collectors.toMap(lp -> lp.getLesson().getId(), LessonProgress::getLastWatchedAt));
+
+        // Tìm bài học cuối cùng dựa trên lastAccessedAt hoặc logic của bạn
+        // Ở đây giả sử bạn có thêm trường lastLessonId trong Enrollment
+        return UserCourseProgressResponse.builder()
+                .overallPercentage(enrollment.getProgressPercentage())
+                .completedLessonIds(completedIds)
+                .lessonWatchHistory(history)
+                .build();
     }
 
     /**
@@ -138,7 +162,7 @@ public class CourseDetailService {
             Map<String, List<LessonSummaryProjection>> lessonsByChapter,
             CourseStatsProjection courseStats,
             InstructorInfo instructorInfo,
-            Set<String> completedLessons) {
+            UserCourseProgressResponse userProgress) {
 
         CourseDetailResponse courseDetailResponse = CourseDetailResponse.builder()
                 .id(course.getId())
@@ -174,8 +198,15 @@ public class CourseDetailService {
                     List<LessonSummaryProjection> lessonSummaries = lessonsByChapter.getOrDefault(ch.id(),
                             Collections.emptyList());
                     Set<LessonResponse> lessons = lessonSummaries.stream()
-                            .map(ls -> lessonService.buildLesson(ls, accessResult,
-                                    completedLessons != null ? completedLessons : Collections.emptySet()))
+                            .map(ls -> {
+                                boolean isCompleted = false;
+                                Integer lastWatched = 0;
+                                if (userProgress != null) {
+                                    isCompleted = userProgress.getCompletedLessonIds().contains(ls.id());
+                                    lastWatched = userProgress.getLessonWatchHistory().getOrDefault(ls.id(), 0);
+                                }
+                                return lessonService.buildLesson(ls, accessResult, isCompleted, lastWatched);
+                            })
                             .collect(Collectors.toSet());
                     response.setLessons(lessons);
                 }

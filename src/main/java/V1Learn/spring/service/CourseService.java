@@ -75,7 +75,6 @@ public class CourseService {
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER') and isAuthenticated()")
-    @CacheEvict(value = "published_courses_page", allEntries = true)
     public CourseResponse updateCourse(String courseId,
                                        CourseUpdateRequest request) {
 
@@ -88,13 +87,13 @@ public class CourseService {
         courseRepository.save(course);
 
         courseCacheService.evictAllCourseRelatedCache(courseId);
+        courseCacheService.evictPublishedListCache();
 
         return courseMapper.toCourseResponse(course);
     }
 
     @Transactional
     @PreAuthorize("hasAnyAuthority('ADMIN', 'TEACHER')")
-    @CacheEvict(value = "published_courses_page", allEntries = true)
     public void publish(String courseId)  {
         log.info("Service: Publish Course for courseId={}", courseId);
 
@@ -106,7 +105,7 @@ public class CourseService {
             throw new AppException(ErrorCode.COURSE_ALREADY_PUBLISHED);
         }
         course.setStatus(CourseStatus.PUBLISHED);
-        courseMapper.toCourseResponse(courseRepository.save(course));
+        courseRepository.save(course);
 
         courseCacheService.evictAllCourseRelatedCache(courseId);
         courseCacheService.evictPublishedListCache();

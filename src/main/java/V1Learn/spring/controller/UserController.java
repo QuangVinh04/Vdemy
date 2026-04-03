@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/user")
 @Slf4j
 public class UserController {
     UserService userService;
@@ -90,7 +90,7 @@ public class UserController {
                 .build();
     }
 
-    @GetMapping("/users")
+    @GetMapping("/all")
     APIResponse<List<UserResponse>> getAllUsers(){
         log.info("Controller: getAllUsers");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

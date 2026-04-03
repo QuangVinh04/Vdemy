@@ -1,6 +1,5 @@
 package V1Learn.spring.service;
 
-import V1Learn.spring.dto.response.CheckEnrolledResponse;
 import V1Learn.spring.dto.response.EnrollmentResponse;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.entity.Course;
@@ -13,6 +12,7 @@ import V1Learn.spring.exception.ErrorCode;
 import V1Learn.spring.mapper.EnrollmentMapper;
 import V1Learn.spring.repository.CourseRepository;
 import V1Learn.spring.repository.EnrollmentRepository;
+import V1Learn.spring.repository.LessonProgressRepository;
 import V1Learn.spring.repository.UserRepository;
 import V1Learn.spring.utils.*;
 import lombok.AccessLevel;
@@ -26,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -35,119 +34,69 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EnrollmentService {
 
-    EnrollmentRepository enrollmentRepository;
-    UserRepository userRepository;
-    CourseRepository courseRepository;
-    EnrollmentMapper enrollmentMapper;
-    CourseAccessService courseAccessService;
+        EnrollmentRepository enrollmentRepository;
+        UserRepository userRepository;
+        CourseRepository courseRepository;
+        LessonProgressRepository lessonProgressRepository;
+        EnrollmentMapper enrollmentMapper;
+        CourseAccessService courseAccessService;
 
-    // @PreAuthorize("isAuthenticated()")
-    // public CheckEnrolledResponse checkEnrolled(String courseId) {
+        @Transactional
+        public void ensureEnrollment(User user, Course course) {
 
-    // String userId = SecurityUtils.getCurrentUserId()
-    // .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+                if (enrollmentRepository.existsByUserIdAndCourseId(user.getId(), course.getId())) {
+                        log.info("User {} already enrolled in course {}", user.getId(), course.getId());
+                        return;
+                }
 
-    // User user = userRepository.findById(userId)
-    // .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                Enrollment e = Enrollment.builder()
+                                .user(user)
+                                .course(course)
+                                .status(EnrollmentStatus.ENROLLED)
+                                .build();
 
-    // Course course = courseRepository.findById(courseId)
-    // .orElseThrow(() -> new AppException(ErrorCode.COURSE_NOT_FOUND));
+                enrollmentRepository.save(e);
+                log.info("User {} enrolled in course {}", user.getId(), course.getId());
 
-    // // Course miễn phí cho phép truy cập
-    // if (course.getPrice().compareTo(BigDecimal.ZERO) == 0) {
-    // return CheckEnrolledResponse.builder()
-    // .currentUserId(userId)
-    // .valid(true)
-    // .build();
-    // }
-    // // Kiểm tra enrollment
-    // List<Enrollment> enrollment =
-    // enrollmentRepository.findByUserIdAndCourseId(user.getId(), courseId)
-    // .orElse(new ArrayList<>());
-
-    // if (!enrollment.isEmpty()) {
-    // for (Enrollment e : enrollment) {
-    // return CheckEnrolledResponse.builder()
-    // .currentUserId(userId)
-    // .valid()
-    // .build();
-
-    // }
-    // }
-    // return CheckEnrolledResponse.builder()
-    // .currentUserId(null)
-    // .valid(false)
-    // .build();
-    // }
-
-    /**
-     * Kiểm tra user đang học course
-     */
-    public boolean isEnrolled(String userId, String courseId) {
-        List<Enrollment> enrollments = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
-                .orElse(new ArrayList<>());
-
-        return enrollments.stream()
-                .anyMatch(e -> e.getStatus() == EnrollmentStatus.ENROLLED ||
-                        e.getStatus() == EnrollmentStatus.IN_PROGRESS ||
-                        e.getStatus() == EnrollmentStatus.COMPLETED);
-    }
-
-    @Transactional
-    public void ensureEnrollment(User user, Course course) {
-
-        if (enrollmentRepository.existsByUserIdAndCourseId(user.getId(), course.getId())) {
-            log.info("User {} already enrolled in course {}", user.getId(), course.getId());
-            return;
+                if (course.getPrice().compareTo(BigDecimal.ZERO) == 0) {
+                        courseAccessService.grantAccess(course.getId(), user.getId(), AccessType.FREE_TRIAL);
+                }
         }
 
-        Enrollment e = Enrollment.builder()
-                .user(user)
-                .course(course)
-                .status(EnrollmentStatus.ENROLLED)
-                .build();
+        // lấy tiến độ 1 khóa
+        @Transactional(readOnly = true)
+        @PreAuthorize("isAuthenticated()")
+        public EnrollmentResponse getProgressForCurrentUser(String courseId) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
-        enrollmentRepository.save(e);
-        log.info("User {} enrolled in course {}", user.getId(), course.getId());
+                Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
+                                .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_EXIST));
 
-        if (course.getPrice().compareTo(BigDecimal.ZERO) == 0) {
-                courseAccessService.grantAccess(course.getId(), user.getId(), AccessType.FREE_TRIAL);
+                int totalLessons = (int) courseRepository.countLessonsByCourseId(courseId);
+
+                return enrollmentMapper.from(enrollment, totalLessons);
         }
-    }
 
-    // lấy tiến độ 1 khóa
-    @Transactional(readOnly = true)
-    @PreAuthorize("isAuthenticated()")
-    public EnrollmentResponse getProgressForCurrentUser(String courseId) {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
+        // danh sách enrollments
+        @Transactional(readOnly = true)
+        @PreAuthorize("isAuthenticated()")
+        public PageResponse<?> getMyEnrollments(Pageable pageable) {
+                String userId = SecurityUtils.getCurrentUserId()
+                                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
 
-        Enrollment enrollment = enrollmentRepository.findByUserIdAndCourseId(userId, courseId)
-                .orElseThrow(() -> new AppException(ErrorCode.ENROLLMENT_NOT_EXIST))
-                .get(0); // nếu bạn để Optional<List>
+                Page<Enrollment> enrollments = enrollmentRepository.findByUserId(userId, pageable);
+                // map sang DTO
+                List<EnrollmentResponse> items = enrollments.stream()
+                                .map(enrollmentMapper::summary)
+                                .toList();
 
-        return enrollmentMapper.from(enrollment);
-    }
-
-    // danh sách enrollments
-    @Transactional(readOnly = true)
-    @PreAuthorize("isAuthenticated()")
-    public PageResponse<?> getMyEnrollments(Pageable pageable) {
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-
-        Page<Enrollment> enrollments = enrollmentRepository.findByUserId(userId, pageable);
-        // map sang DTO
-        List<EnrollmentResponse> items = enrollments.stream()
-                .map(enrollmentMapper::summary)
-                .toList();
-
-        return PageResponse.builder()
-                .pageNo(pageable.getPageNumber())
-                .pageSize(pageable.getPageSize())
-                .totalPage(enrollments.getTotalPages())
-                .items(items)
-                .build();
-    }
+                return PageResponse.builder()
+                                .pageNo(pageable.getPageNumber())
+                                .pageSize(pageable.getPageSize())
+                                .totalPage(enrollments.getTotalPages())
+                                .items(items)
+                                .build();
+        }
 
 }

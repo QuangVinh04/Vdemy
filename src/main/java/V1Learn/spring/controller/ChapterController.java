@@ -15,12 +15,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/chapters")
 @Slf4j
 public class ChapterController {
     ChapterService chapterService;
 
-    @PostMapping("/create-chapter/{courseId}")
+    @PostMapping("/{courseId}")
     APIResponse<?> createChapter(@PathVariable String courseId,
                                  @RequestBody ChapterRequest request) {
         log.info("Creating chapter for courseId={}", courseId);
@@ -30,7 +30,7 @@ public class ChapterController {
     }
 
 
-    @PutMapping("/update-chapter/{chapterId}")
+    @PutMapping("/update/{chapterId}")
     APIResponse<?> updateChapter(@RequestBody ChapterRequest request,
                               @PathVariable("chapterId") String chapterId) {
         log.info("Updating chapterId={}", chapterId);
@@ -40,7 +40,7 @@ public class ChapterController {
                 .build();
     }
 
-    @DeleteMapping("/delete-chapter/{chapterId}")
+    @DeleteMapping("/delete/{chapterId}")
     APIResponse<String> deleteChapter(@PathVariable String chapterId) {
         log.info("Deleting chapterId={}", chapterId);
         chapterService.deleteChapter(chapterId);

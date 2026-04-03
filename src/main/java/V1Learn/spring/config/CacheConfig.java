@@ -1,6 +1,7 @@
 package V1Learn.spring.config;
 
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
+import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -12,7 +13,7 @@ import java.time.Duration;
 
 @Configuration
 @EnableCaching
-public class CacheConfig {
+public class CacheConfig extends CachingConfigurerSupport {
     @Bean
     public RedisCacheConfiguration cacheConfiguration() {
         return RedisCacheConfiguration.defaultCacheConfig()
@@ -43,4 +44,7 @@ public class CacheConfig {
                                 .entryTtl(Duration.ofMinutes(30)));
 
     }
+
+    // Xử lý lỗi cache không làm ảnh hưởng tới luồng chính
+
 }

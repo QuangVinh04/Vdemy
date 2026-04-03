@@ -1,34 +1,29 @@
 package V1Learn.spring.mapper;
 
-
-
-
-
 import V1Learn.spring.dto.response.EnrollmentResponse;
 import V1Learn.spring.entity.Enrollment;
 import org.mapstruct.Mapper;
 
-
 @Mapper(componentModel = "spring")
 public interface EnrollmentMapper {
 
-    default EnrollmentResponse from(Enrollment enrollment) {
+    default EnrollmentResponse from(Enrollment enrollment, int totalLessonsInCourse) {
         if (enrollment == null) {
             return null;
         }
 
         // Tính toán số lesson đã hoàn thành
         int completedLessons = 0;
-        int totalLessons = 0;
         long watchedDuration = 0;
 
         if (enrollment.getLessonProgresses() != null) {
-            totalLessons = enrollment.getLessonProgresses().size();
             completedLessons = (int) enrollment.getLessonProgresses().stream()
                     .filter(lp -> Boolean.TRUE.equals(lp.getIsCompleted()))
                     .count();
+            // Lưu ý: lastWatchedAt là vị trí xem cuối cùng (giây), dùng làm ước lượng thời
+            // gian xem
             watchedDuration = enrollment.getLessonProgresses().stream()
-                    .mapToLong(lp -> lp.getWatchTime() != null ? lp.getWatchTime().longValue() : 0L)
+                    .mapToLong(lp -> lp.getLastWatchedAt() != null ? lp.getLastWatchedAt().longValue() : 0L)
                     .sum();
         }
 
@@ -48,11 +43,11 @@ public interface EnrollmentMapper {
                 .courseThumbnailUrl(enrollment.getCourse().getThumbnailUrl())
                 .courseDescription(enrollment.getCourse().getDescription())
                 .instructorName(enrollment.getCourse().getInstructor().getFullName())
-                .instructorAvatar(enrollment.getCourse().getInstructor().getAvatar())
+                .instructorAvatar(enrollment.getCourse().getInstructor().getAvatarUrl())
                 .instructorId(enrollment.getCourse().getInstructor().getId())
 
                 // Stats
-                .totalLessons(totalLessons)
+                .totalLessons(totalLessonsInCourse)
                 .completedLessons(completedLessons)
                 .totalDuration(enrollment.getCourse().getTotalDuration())
                 .watchedDuration(watchedDuration)
@@ -80,9 +75,8 @@ public interface EnrollmentMapper {
                 .courseTitle(enrollment.getCourse().getTitle())
                 .courseThumbnailUrl(enrollment.getCourse().getThumbnailUrl())
                 .instructorName(enrollment.getCourse().getInstructor().getFullName())
-                .instructorAvatar(enrollment.getCourse().getInstructor().getAvatar())
+                .instructorAvatar(enrollment.getCourse().getInstructor().getAvatarUrl())
                 .build();
     }
-
 
 }
