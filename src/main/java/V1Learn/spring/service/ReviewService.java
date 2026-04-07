@@ -1,9 +1,9 @@
 package V1Learn.spring.service;
 
+import V1Learn.spring.dto.event.ReviewRequest;
 import V1Learn.spring.dto.request.ReplyReviewRequest;
 import V1Learn.spring.dto.response.ReviewTeacherResponse;
 import V1Learn.spring.dto.event.NotificationEvent;
-import V1Learn.spring.dto.event.ReviewRequest;
 import V1Learn.spring.dto.response.AccessDecision;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.dto.response.ReviewResponse;
@@ -22,11 +22,12 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,25 +47,14 @@ import java.util.regex.Pattern;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReviewService {
 
-    KafkaTemplate<String, Object> kafkaTemplate;
+
     ReviewMapper reviewMapper;
     ReviewRepository reviewRepository;
     CourseRepository courseRepository;
     UserRepository userRepository;
     CourseAccessService courseAccessService;
+    ApplicationEventPublisher eventPublisher;
 
-    public void sendReview(ReviewRequest request) {
-        log.info("Sending review to Kafka: {}", request);
-        String userId = SecurityUtils.getCurrentUserId()
-                .orElseThrow(() -> new AppException(ErrorCode.AUTH_UNAUTHORIZED));
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-        // Validate review request
-        validateReviewRequest(request, user.getId());
-
-        kafkaTemplate.send("course-review", user.getId(), request);
-    }
 
     /**
      * Validate review request
@@ -102,6 +92,8 @@ public class ReviewService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        validateReviewRequest(request, user.getId());
+
         Review review = Review.builder()
                 .content(request.getContent())
                 .rating(request.getRating())
@@ -111,16 +103,19 @@ public class ReviewService {
 
         reviewRepository.save(review);
 
-        NotificationEvent event = NotificationEvent.builder()
-                        .recipientId(course.getInstructor().getId())
-                        .title("Khóa học của bạn vừa được đánh giá")
-                        .content(review.getContent())
-                        .targetUrl(null)
-                        .type(NotificationType.COURSE_REVIEW)
-                        .createdAt(LocalDateTime.now())
-                        .build();
 
-        kafkaTemplate.send("notification-events", course.getInstructor().getId(), event);
+        NotificationEvent event = NotificationEvent.builder()
+                .recipientId(course.getInstructor().getId())
+                .title("Khóa học của bạn vừa được đánh giá")
+                .content(review.getContent())
+                .targetUrl(null)
+                .type(NotificationType.COURSE_REVIEW)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+
+        eventPublisher.publishEvent(event);
+
     }
 
     public PageResponse<?> getReviewsByCourseWithSortBy(String courseId, int pageNo, int pageSize, String sortBy) {
@@ -272,7 +267,7 @@ public class ReviewService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        kafkaTemplate.send("notification-events", review.getUser().getId(), event);
+        eventPublisher.publishEvent(event);
 
 
     }

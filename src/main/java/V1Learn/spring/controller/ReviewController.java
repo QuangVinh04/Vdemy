@@ -1,7 +1,7 @@
 package V1Learn.spring.controller;
 
-import V1Learn.spring.dto.request.ReplyReviewRequest;
 import V1Learn.spring.dto.event.ReviewRequest;
+import V1Learn.spring.dto.request.ReplyReviewRequest;
 import V1Learn.spring.dto.response.APIResponse;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.service.ReviewService;
@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.*;
 public class ReviewController {
     ReviewService reviewService;
 
-    @PostMapping()
-    APIResponse<?> createReview(@RequestBody @Valid ReviewRequest reviewRequest) {
+    @PostMapping("/{userId}")
+    APIResponse<?> createReview(@RequestBody @Valid ReviewRequest reviewRequest, 
+                                @PathVariable("userId") String userId) {
         log.info("Creating a review for course [{}]", reviewRequest.getCourseId());
-        reviewService.sendReview(reviewRequest);
+        reviewService.saveReview(reviewRequest, userId);
         return APIResponse.builder()
                 .result("Review pending ...")
                 .build();

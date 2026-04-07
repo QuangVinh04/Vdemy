@@ -1,10 +1,9 @@
 package V1Learn.spring.service;
 
-import V1Learn.spring.dto.event.PaymentResultEvent;
+import V1Learn.spring.dto.event.PaymentCompleteEvent;
 import V1Learn.spring.dto.request.InitPaymentRequest;
 import V1Learn.spring.dto.response.PageResponse;
 import V1Learn.spring.dto.response.PaymentResponse;
-import V1Learn.spring.dto.event.NotificationEvent;
 import V1Learn.spring.dto.response.VNPayIPNResponse;
 import V1Learn.spring.entity.*;
 import V1Learn.spring.enums.*;
@@ -22,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -41,12 +41,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PaymentService {
-    UserRepository userRepository;
     CourseRepository courseRepository;
-    EnrollmentRepository enrollmentRepository;
     PaymentRepository paymentRepository;
     CheckoutRepository checkoutRepository;
     KafkaTemplate<String, Object> kafkaTemplate;
+    ApplicationEventPublisher eventPublisher;
 
     CheckoutService checkoutService;
     OrderService orderService;
@@ -242,48 +241,38 @@ public class PaymentService {
                 }
             }
 
-            // === SIDE EFFECTS: notification, cart cleanup ===
+
             // Cho phép fail mà không ảnh hưởng payment flow
             try {
                 // Xóa cart items sau khi payment thành công
                 cartService.clearCartAfterPayment(user.getId(), order.getOrderItems());
 
-                notifyPaymentResult(user.getId(),
-                        new PaymentResultEvent(
-                                payment.getTransactionId(),
-                                "SUCCESS"));
-
-                NotificationEvent event = NotificationEvent.builder()
-                        .recipientId(user.getId())
-                        .title("Thanh toán thành công")
-                        .content("Bạn đã mua khóa học thành công")
-                        .type(NotificationType.ORDER_CONFIRMED)
-                        .createdAt(LocalDateTime.now())
-                        .build();
-
-                kafkaTemplate.send("notification-events", user.getId(), event);
             } catch (Exception e) {
-                log.error("Hệ thống phụ (Notify/Cart) gặp lỗi cho đơn hàng {}: {}",
+                log.error("Lỗi xóa cart cho đơn hàng {}: {}",
                         order.getOrderCode(),
                         e.getMessage());
             }
+
+            eventPublisher.publishEvent(PaymentCompleteEvent.builder()
+                    .userId(user.getId())
+                    .transactionId(payment.getTransactionId())
+                    .orderCode(order.getOrderCode())
+                    .status(PaymentStatus.COMPLETED)
+                    .build());
+
         } else {
             order.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(order);
             checkoutService.updateCheckoutState(order.getCheckout().getId(), CheckoutState.PAYMENT_FAILED);
             User user = order.getUser();
 
-            notifyPaymentResult(user.getId(),
-                    new PaymentResultEvent(
-                            payment.getTransactionId(),
-                            "FAILED"));
+            eventPublisher.publishEvent(PaymentCompleteEvent.builder()
+                    .userId(user.getId())
+                    .transactionId(payment.getTransactionId())
+                    .orderCode(order.getOrderCode())
+                    .status(PaymentStatus.FAILED)
+                    .build());
         }
-    }
-
-    public void notifyPaymentResult(String userId, PaymentResultEvent event) {
-        messagingTemplate.convertAndSend(
-                "/topic/payment/" + userId,
-                event);
     }
 
     @Transactional(readOnly = true)

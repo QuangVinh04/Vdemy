@@ -111,9 +111,5 @@ public class MailService {
     }
 
 
-    public String generateVerifyCode() {
-        Random random = new Random();
-        return String.format("%06d", random.nextInt(1000000));  // Tạo mã 6 chữ số ngẫu nhiên
-    }
 }
 

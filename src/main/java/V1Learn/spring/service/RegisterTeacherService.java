@@ -17,6 +17,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -39,7 +40,7 @@ public class RegisterTeacherService {
     InstructorApplicationRepository applicationRepository;
     RegisterTeacherMapper registerTeacherMapper;
     CloudinaryService cloudinaryService;
-    KafkaTemplate<String, Object> kafkaTemplate;
+    ApplicationEventPublisher eventPublisher;
 
 
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -125,7 +126,7 @@ public class RegisterTeacherService {
                     .type(NotificationType.REGISTER_TEACHER)
                     .createdAt(LocalDateTime.now())
                     .build();
-            kafkaTemplate.send("notification-events", a.getId(), event);
+            eventPublisher.publishEvent(event);
         }
         return RegisterTeacherResponse.builder()
                 .id(registerTeacher.getId())
@@ -171,8 +172,7 @@ public class RegisterTeacherService {
                     .type(NotificationType.REGISTER_TEACHER)
                     .createdAt(LocalDateTime.now())
                     .build();
-
-            kafkaTemplate.send("notification-events", user.getId(), event);
+            eventPublisher.publishEvent(event);
 
             return RegisterTeacherResponse.builder()
                     .id(registerTeacher.getId())
@@ -215,7 +215,7 @@ public class RegisterTeacherService {
                     .createdAt(LocalDateTime.now())
                     .build();
 
-            kafkaTemplate.send("notification-events", user.getId(), event);
+            eventPublisher.publishEvent(event);
 
             return RegisterTeacherResponse.builder()
                     .id(registerTeacher.getId())

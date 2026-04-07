@@ -50,9 +50,19 @@ public class NotificationService {
                 .message(event.getContent())
                 .isRead(false)
                 .build();
-
-        simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications", notification);
         notificationRepository.save(notification);
+
+        NotificationResponse response = NotificationResponse.builder()
+                .id(notification.getId())
+                .title(notification.getTitle())
+                .message(notification.getMessage())
+                .url(notification.getUrl())
+                .isRead(notification.getIsRead())
+                .timestamp(notification.getCreatedAt())
+                .build();
+
+        simpMessagingTemplate.convertAndSendToUser(userId, "/queue/notifications", response);
+
     }
 
 
@@ -109,9 +119,7 @@ public class NotificationService {
         String userId = SecurityUtils.getCurrentUserId()
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        List<Notification> unread = notificationRepository.findAllByRecipientIdAndIsReadFalse(userId);
-        unread.forEach(n -> n.setIsRead(true));
-        notificationRepository.saveAll(unread);
+        notificationRepository.markAllAsReadByUserId(userId);
     }
 
     @Transactional
@@ -128,9 +136,6 @@ public class NotificationService {
         }
         notificationRepository.deleteById(notificationId);
     }
-
-
-
 
 
 }

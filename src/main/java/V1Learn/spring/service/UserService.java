@@ -1,5 +1,6 @@
 package V1Learn.spring.service;
 
+import V1Learn.spring.dto.event.SendMailEvent;
 import V1Learn.spring.dto.request.*;
 import V1Learn.spring.dto.response.UserResponse;
 import V1Learn.spring.entity.Role;
@@ -12,6 +13,7 @@ import V1Learn.spring.repository.RoleRepository;
 import V1Learn.spring.repository.UserRepository;
 import V1Learn.spring.constant.PredefinedRole;
 import V1Learn.spring.enums.UserStatus;
+import V1Learn.spring.utils.OtpUtils;
 import V1Learn.spring.utils.SecurityUtils;
 import jakarta.mail.MessagingException;
 import lombok.AccessLevel;
@@ -19,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.mail.MailSender;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -38,10 +42,9 @@ import java.util.stream.Collectors;
 public class UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
-    EnrollmentRepository enrollmentRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
-    MailService mailService;
+    ApplicationEventPublisher eventPublisher;
     RedisService redisService;
 
     @NonFinal
@@ -65,15 +68,18 @@ public class UserService {
         user.setRoles(roles);
         user.setStatus(UserStatus.INACTIVE);
 
-        // Tạo mã xác nhận ngẫu nhiên
-        String verifyCode = mailService.generateVerifyCode();
+        String verifyCode = OtpUtils.generateVerifyCode();
 
         // lưu mã vào redis có thời hạn 10p
         redisService.setWithTTL(CONFIRM_USER + request.getEmail(), verifyCode, 10, TimeUnit.MINUTES);
-
         userRepository.save(user);
 
-        mailService.sendConfirmLink(request.getEmail(), verifyCode);
+        SendMailEvent event = SendMailEvent.builder()
+                .email(request.getEmail())
+                .subject("Xác nhận đăng ký tài khoản")
+                .otpCode(verifyCode)
+                .build();
+        eventPublisher.publishEvent(event);
     }
 
     @Transactional
@@ -136,11 +142,16 @@ public class UserService {
         if(!user.getStatus().equals(UserStatus.ACTIVE)) {
             throw new AppException(ErrorCode.USER_NOT_ACTIVE);
         }
-        String otp = mailService.generateVerifyCode();
+        String otp = OtpUtils.generateVerifyCode();
         redisService.setWithTTL(RESET_PASSWORD_CODE + request.getEmail(), otp, 10, TimeUnit.MINUTES); // 10 phút
-        mailService.sendConfirmLink(request.getEmail(), otp);
-        log.info("{}{}", RESET_PASSWORD_CODE, request.getEmail());
-        log.info(otp);
+
+        SendMailEvent event = SendMailEvent.builder()
+                .email(request.getEmail())
+                .subject("Mã xác nhận quên mật khẩu")
+                .otpCode(otp)
+                .build();
+
+        eventPublisher.publishEvent(event);
     }
 
 
